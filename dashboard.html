@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Espace Administration · Teranga Palace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app"></div>
+<div id="toast-stack"></div>
+<div id="modal-root"></div>
+<div id="print-area" class="print-only"></div>
+
+<script src="js/icons.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/pages-admin.js"></script>
+<script>
+  // dashboard.html est une page autonome, hors de la SPA publique (index.html).
+  // Elle réutilise renderAdminShell() et les pages admin existantes (js/ui.js,
+  // js/pages-admin.js) telles quelles, sans duplication de code : seule cette
+  // petite passerelle change (garde d'accès + choix de la route à afficher).
+  ADMIN_STANDALONE = true;
+
+  function renderDashboard(){
+    const session = getSession();
+    // Pas connecté, ou compte Client : ce dashboard leur est interdit -> vers login.html.
+    if(!session || session.role === "Client"){
+      location.href = "login.html";
+      return;
+    }
+    let route = currentRoute();
+    if(!route.startsWith("admin/")){
+      // Première visite (hash vide) ou route invalide : on se place sur le tableau de bord.
+      location.hash = "#/admin/dashboard";
+      return; // le hashchange déclenché ci-dessus relance renderDashboard() avec la bonne route.
+    }
+    renderAdminShell(route, session);
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener("hashchange", renderDashboard);
+  window.addEventListener("DOMContentLoaded", renderDashboard);
+  window.addEventListener("tp-photos-hydrated", renderDashboard);
+
+  // -------- Mise à jour automatique du Dashboard --------
+  // Recharge les données depuis localStorage (LS_KEY, défini dans js/data.js)
+  // et re-rend la page admin courante dès qu'un changement est détecté,
+  // sans que l'utilisateur ait besoin de recharger la page manuellement.
+  let lastSnapshot = localStorage.getItem(LS_KEY);
+  function refreshFromStorage(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw === lastSnapshot) return; // rien de nouveau
+    // On évite de re-rendre en plein milieu d'une action (modale ouverte,
+    // ex: check-in/check-out ou modification d'une réservation en cours).
+    const modalOpen = document.getElementById("modal-root") && document.getElementById("modal-root").innerHTML.trim() !== "";
+    if(modalOpen) return;
+    lastSnapshot = raw;
+    reloadDB(); // recharge DB puis réhydrate les photos depuis IndexedDB (déclenche renderDashboard via tp-photos-hydrated)
+    renderDashboard();
+  }
+  // Se déclenche quand une inscription/réservation est faite dans un AUTRE
+  // onglet/fenêtre du même site (ex: index.html ouvert à côté).
+  window.addEventListener("storage", function(e){
+    if(!e.key || e.key === LS_KEY) refreshFromStorage();
+  });
+  // Filet de sécurité : quand on revient sur cet onglet (ex: après être allé
+  // faire une réservation sur index.html puis être revenu ici).
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden) refreshFromStorage();
+  });
+  window.addEventListener("focus", refreshFromStorage);
+  // Vérifie aussi périodiquement (utile notamment en file://, où l'événement
+  // "storage" est parfois peu fiable entre plusieurs fichiers ouverts séparément).
+  setInterval(refreshFromStorage, 4000);
+</script>
+</body>
+</html>

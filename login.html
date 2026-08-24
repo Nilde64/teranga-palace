@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — Espace Administration · Teranga Palace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background:var(--bleu-nuit);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+
+<div style="width:100%;max-width:440px;">
+  <div style="text-align:center;margin-bottom:28px;color:var(--ivoire);">
+    <div id="login-logo" style="width:44px;margin:0 auto 14px;"></div>
+    <div class="brand-text" style="display:flex;flex-direction:column;align-items:center;">
+      <b style="font-family:var(--serif);font-size:22px;">Teranga Palace</b>
+      <span style="font-size:9px;letter-spacing:.32em;color:var(--or);text-transform:uppercase;margin-top:4px;">Espace Administration</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-head" style="margin-bottom:22px;">
+      <div class="eyebrow">Personnel autorisé</div>
+      <h2 style="font-size:26px;margin-top:8px;">Connexion</h2>
+      <p style="font-size:13px;">Réservé au personnel (Réceptionniste, Gestionnaire). Espace client ? <a href="index.html" style="color:var(--or);text-decoration:underline;">retournez au site</a>.</p>
+    </div>
+
+    <div class="field"><label>Email</label><input type="email" id="lg-email"><span class="err">Veuillez saisir un email valide.</span></div>
+    <div class="field"><label>Mot de passe</label><input type="password" id="lg-pass"><span class="err">Veuillez renseigner votre mot de passe.</span></div>
+    <p id="login-error" style="color:var(--rouge);font-size:12.5px;margin-bottom:10px;"></p>
+    <button class="btn btn-gold btn-block" id="btn-login">Se connecter</button>
+  </div>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  // Page autonome (hors SPA index.html) : authentifie le personnel puis redirige
+  // vers dashboard.html. Réutilise la couche de données (DB, session) de data.js.
+  document.getElementById("login-logo").innerHTML = ic('logo');
+  wirePasswordToggle("lg-pass");
+
+  // Si déjà connecté en tant que personnel, on va directement au dashboard.
+  (function redirectIfAlreadyStaff(){
+    const s = getSession();
+    if(s && s.role !== "Client") location.href = "dashboard.html";
+  })();
+
+  document.getElementById("btn-login").onclick = function(){
+    const email = document.getElementById("lg-email"), pass = document.getElementById("lg-pass");
+    const errorEl = document.getElementById("login-error");
+    errorEl.textContent = "";
+    let valid = true;
+    valid = markField(email, isEmailValid(email.value), "Veuillez saisir un email valide.") && valid;
+    valid = markField(pass, !!pass.value) && valid;
+    if(!valid) return;
+
+    const user = DB.users.find(u => u.email.toLowerCase() === email.value.toLowerCase() && u.password === pass.value);
+    if(!user){ errorEl.textContent = "Email ou mot de passe incorrect."; return; }
+    if(user.role === "Client"){ errorEl.textContent = "Ce compte est un compte client : utilisez l'espace client sur le site principal."; return; }
+
+    const client = user.idClient ? DB.clients.find(c => c.idClient === user.idClient) : null;
+    setSession({ email: user.email, role: user.role, idClient: user.idClient || null, prenom: client ? client.prenom : user.role });
+    location.href = "dashboard.html";
+  };
+
+  // Permet de valider avec la touche Entrée.
+  document.getElementById("lg-pass").addEventListener("keydown", function(e){
+    if(e.key === "Enter") document.getElementById("btn-login").click();
+  });
+</script>
+</body>
+</html>
