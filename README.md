@@ -35,8 +35,7 @@ teranga-palace/
 │   ├── teranga_palace.db         Base SQLite déjà construite, prête à l'emploi
 │   └── README.md                  Détails du modèle relationnel
 └── assets/
-    ├── images/
-    ├── icons/
+    ├── images/                  images de chaque chambre 
     └── video/                   Vidéo de fond de la page d'accueil (optionnelle)
 ```
 
