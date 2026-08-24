@@ -18,7 +18,7 @@
   --sans:'Jost', sans-serif;
 }
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden;}
 body{
   font-family:var(--sans);
   background:var(--ivoire);
@@ -239,7 +239,7 @@ table tr:hover td{background:rgba(201,161,90,.04);}
 .empty-state svg{margin-bottom:14px;opacity:.5;}
 .empty-state h4{font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:6px;}
 
-.footer{background:var(--bleu-nuit);color:rgba(250,246,236,.6);padding:56px 28px 26px;}
+.footer{background:var(--bleu-nuit);color:rgba(250,246,236,.6);padding:56px 28px 26px;overflow-wrap:break-word;word-break:break-word;}
 .footer-inner{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;}
 .footer h5{color:var(--or-clair);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;}
 .footer a{display:block;font-size:13px;color:rgba(250,246,236,.62);margin-bottom:9px;}
@@ -278,12 +278,28 @@ table tr:hover td{background:rgba(201,161,90,.04);}
   .admin-sidebar-backdrop{display:block;position:fixed;inset:76px 0 0 0;background:rgba(11,27,46,.5);z-index:89;opacity:0;pointer-events:none;transition:opacity .2s;}
   .admin-sidebar-backdrop.open{opacity:1;pointer-events:auto;}
   .admin-main{padding:24px 18px;}
+  .hero-video-section{min-height:auto;padding-top:0;display:flex;flex-direction:column;}
+  .hero-video-section > div[style*="width:50%"]{
+    position:relative !important;
+    width:100% !important;
+    height:300px !important;
+    top:auto !important;
+    right:auto !important;
+  }
+  .hero-video-section > div[style*="padding:150px"]{
+    padding:40px 28px 70px !important;
+    flex-wrap:nowrap !important;
+  }
+  .hero-video-section > div[style*="padding:150px"] > div{
+    max-width:100% !important;
+    flex:1 1 auto !important;
+  }
 }
 @media (max-width:980px){
   .stat-grid{grid-template-columns:repeat(2,1fr);}
   .room-grid{grid-template-columns:repeat(2,1fr);}
   .form-grid{grid-template-columns:1fr;}
-  .footer-inner{grid-template-columns:1fr 1fr;}
+  .footer-inner{grid-template-columns:1fr 1fr;gap:24px;}
   .grid-4{grid-template-columns:repeat(2,1fr);}
   .grid-2, .grid-dash{grid-template-columns:1fr;}
   .topbar-inner{padding:0 18px;}
@@ -292,13 +308,28 @@ table tr:hover td{background:rgba(201,161,90,.04);}
 @media (max-width:720px){
   .room-grid{grid-template-columns:1fr;}
   .grid-4{grid-template-columns:1fr;}
-  .footer-inner{grid-template-columns:1fr;}
+  .footer-inner{grid-template-columns:1fr;gap:26px;font-size:12px;}
+  .footer h5{font-size:11px;margin-bottom:10px;}
+  .footer a{font-size:12px;margin-bottom:8px;}
+  .footer p{max-width:100% !important;}
+  .footer-bottom{font-size:10px;flex-direction:column;text-align:center;}
   table{min-width:560px;}
   .stat-grid{grid-template-columns:1fr;}
   .brand-text span{display:none;}
-  .hero-video-section{min-height:auto;padding-top:20px;}
-  .hero-video-section h1{font-size:36px !important;}
-  .hero-video-section [style*="width:50%"]{display:none;}
+  .hero-video-section{min-height:auto;padding-top:0;display:flex;flex-direction:column;}
+  .hero-video-section h1{font-size:32px !important;}
+  /* Sur mobile, la vidéo passe en bannière pleine largeur au-dessus du texte
+     au lieu d'être masquée sur le côté droit (pas assez de place pour les deux). */
+  .hero-video-section > div[style*="width:50%"]{
+    position:relative !important;
+    width:100% !important;
+    height:200px !important;
+    top:auto !important;
+    right:auto !important;
+  }
+  .hero-video-section > div[style*="padding:150px"]{
+    padding:32px 20px 60px !important;
+  }
   .modal-box{padding:20px;}
   .admin-topline h1{font-size:22px;}
   .location-map{height:220px;}
@@ -309,4 +340,8 @@ table tr:hover td{background:rgba(201,161,90,.04);}
   .section-head h2{font-size:28px;}
   .btn{padding:11px 18px;font-size:12.5px;}
   table{min-width:480px;}
+  .footer{padding:36px 18px 20px;}
+  .footer-inner{grid-template-columns:1fr;gap:22px;font-size:11.5px;}
+  .footer h5{font-size:10.5px;margin-bottom:8px;}
+  .footer a{font-size:11.5px;margin-bottom:7px;}
 }
