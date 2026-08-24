@@ -146,6 +146,50 @@ puis ouvrir `http://localhost:8000/`.
 | Réceptionniste  | reception@terangapalace.sn      | reception123   |
 | Gestionnaire    | manager@terangapalace.sn        | manager123     |
 
+## Base partagée (Supabase) — pour que les réservations soient visibles par tous
+
+Par défaut, l'application fonctionne 100 % en local (LocalStorage/IndexedDB,
+propre à chaque navigateur/appareil) — voir "Stockage des données" plus haut.
+Ça veut dire que si un client réserve depuis son téléphone, la réception ne
+verra RIEN de cette réservation depuis un autre appareil : ce sont deux
+"copies" totalement indépendantes des données.
+
+Pour que tout le monde (client, réception, gestionnaire) voie les mêmes
+données en temps quasi réel, brancher une base **Supabase** (gratuite) :
+
+1. Crée un compte sur [supabase.com](https://supabase.com) et un nouveau
+   projet (gratuit).
+2. Dans le projet Supabase → **SQL Editor**, colle le contenu de
+   `database/supabase_schema.sql` et clique sur **Run**. Ça crée toutes les
+   tables (clients, chambres, users, reservations, sejours, paiements,
+   factures) avec les mêmes règles métier que le reste du projet (anti-double
+   réservation, etc.).
+3. Dans **Settings → API**, copie le **Project URL** et la clé **anon
+   public** (⚠️ jamais la clé `service_role`, qui donne un accès total).
+4. Ouvre `js/supabase-config.js` et colle ces deux valeurs dans
+   `SUPABASE_URL` et `SUPABASE_ANON_KEY`.
+5. Recharge le site : au premier chargement, les données locales existantes
+   (chambres, comptes de démo...) sont automatiquement poussées vers
+   Supabase, puis synchronisées entre tous les navigateurs toutes les ~8
+   secondes.
+
+**Limites à connaître** (acceptables pour un projet académique, à ne pas
+reproduire tel quel en production) :
+- La sécurité au niveau des lignes (RLS) est désactivée sur les tables : la
+  clé `anon` publique donne un accès en lecture ET écriture à tout le monde.
+  Suffisant pour une démo scolaire, pas pour un vrai site avec des données
+  sensibles.
+- Pas de vrai temps réel : chaque navigateur récupère les nouvelles données
+  toutes les 8 secondes environ (pas de mise à jour instantanée à la
+  seconde près).
+- La numérotation des identifiants (réservations, séjours...) est recalculée
+  à chaque synchronisation pour limiter les collisions, mais deux
+  réservations créées en même temps sur deux appareils différents, entre
+  deux synchronisations, restent un cas limite non garanti à 100 %.
+
+Sans configuration Supabase (fichier laissé vide), l'application continue de
+fonctionner exactement comme avant, en local uniquement.
+
 ## Réinitialiser les données de démonstration
 
 Dans la console du navigateur (sur la page du site) :

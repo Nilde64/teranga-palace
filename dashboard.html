@@ -15,6 +15,8 @@
 <div id="print-area" class="print-only"></div>
 
 <script src="js/icons.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/pages-admin.js"></script>
@@ -45,6 +47,7 @@
   window.addEventListener("hashchange", renderDashboard);
   window.addEventListener("DOMContentLoaded", renderDashboard);
   window.addEventListener("tp-photos-hydrated", renderDashboard);
+  window.addEventListener("tp-data-synced", renderDashboard);
 
   // -------- Mise à jour automatique du Dashboard --------
   // Recharge les données depuis localStorage (LS_KEY, défini dans js/data.js)

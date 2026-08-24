@@ -1,4 +1,4 @@
-/* ============================= DATA LAYER (LocalStorage + IndexedDB pour les photos) ============================= */
+/* ============================= DATA LAYER (LocalStorage + IndexedDB + Supabase) ============================= */
 const DB_VERSION = "tp-v1";
 const LS_KEY = "teranga_palace_db";
 
@@ -11,25 +11,30 @@ function loadDB(){
   persist(fresh);
   return fresh;
 }
-/* Sauvegarde les données "légères" en LocalStorage : les photos (lourdes) ne sont jamais
-   incluses ici, elles vivent uniquement dans IndexedDB (quota bien plus grand). */
+/* Écrit uniquement le cache local (LocalStorage), sans toucher à Supabase.
+   Les photos "lourdes" en base64 ne sont jamais incluses ici (elles vivent
+   dans IndexedDB) ; un chemin statique léger (ex: assets/images/xxx.svg)
+   reste stocké normalement. */
+function cacheLocally(db){
+  const light = {
+    ...db,
+    chambres: db.chambres.map(c=>{
+      if(c.photo && typeof c.photo === "string" && c.photo.startsWith("data:image")){
+        const { photo, ...rest } = c;
+        return rest;
+      }
+      return c;
+    })
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(light));
+}
+/* Sauvegarde locale (toujours) + réplication vers Supabase en tâche de fond si configuré
+   (js/supabase-config.js). Si Supabase échoue (hors-ligne, pas encore configuré...), les
+   données restent quand même en sécurité localement — comportement inchangé par rapport à avant. */
 function persist(db){
   try{
-    const light = {
-      ...db,
-      // On ne retire du LocalStorage que les photos "lourdes" en base64
-      // (data:image...) — celles-là vivent exclusivement dans IndexedDB.
-      // Un chemin statique (ex: assets/images/chambre-simple.svg) est léger
-      // et reste stocké normalement, sinon il serait perdu au rechargement.
-      chambres: db.chambres.map(c=>{
-        if(c.photo && typeof c.photo === "string" && c.photo.startsWith("data:image")){
-          const { photo, ...rest } = c;
-          return rest;
-        }
-        return c;
-      })
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(light));
+    cacheLocally(db);
+    if(window.sb){ pushDBToSupabase(db).catch(e=>console.error("Synchronisation Supabase (écriture) échouée", e)); }
     return true;
   }catch(e){
     console.error("Erreur de sauvegarde", e);
@@ -42,6 +47,86 @@ function persist(db){
   }
 }
 function save(){ return persist(DB); }
+
+/* ---- Réplication Supabase (base partagée entre tous les navigateurs/appareils) ---- */
+/* Association clé JS (tableau dans DB) -> [table Postgres, clé primaire] */
+const SB_TABLES = {
+  clients:      ["clients", "idClient"],
+  chambres:     ["chambres", "numeroChambre"],
+  users:        ["users", "email"],
+  reservations: ["reservations", "id"],
+  sejours:      ["sejours", "idSejour"],
+  paiements:    ["paiements", "idPaiement"],
+  factures:     ["factures", "numeroFacture"]
+};
+
+/* Pousse l'état local vers Supabase : upsert de chaque ligne, puis suppression côté
+   distant de tout ce qui n'existe plus localement (miroir complet, simple et fiable). */
+async function pushDBToSupabase(db){
+  if(!window.sb) return;
+  for(const [jsKey, [table, pk]] of Object.entries(SB_TABLES)){
+    const rows = db[jsKey] || [];
+    try{
+      if(rows.length){
+        const clean = jsKey==="chambres" ? rows.map(({photo, ...rest})=>rest) : rows;
+        const { error } = await window.sb.from(table).upsert(clean, { onConflict: pk });
+        if(error) console.error("Supabase upsert", table, error);
+      }
+      const { data: remoteRows, error: selErr } = await window.sb.from(table).select(pk);
+      if(!selErr && remoteRows){
+        const localIds = new Set(rows.map(r=>r[pk]));
+        const toDelete = remoteRows.map(r=>r[pk]).filter(id=>!localIds.has(id));
+        if(toDelete.length){
+          const { error: delErr } = await window.sb.from(table).delete().in(pk, toDelete);
+          if(delErr) console.error("Supabase delete", table, delErr);
+        }
+      }
+    }catch(e){ console.error("Supabase sync (écriture) — table", table, e); }
+  }
+}
+
+/* Recalcule les compteurs locaux (numérotation des réservations/séjours/paiements/factures)
+   à partir du maximum réellement présent côté Supabase, pour limiter le risque de collision
+   d'identifiants entre deux navigateurs différents créant des entrées en parallèle. */
+function recomputeCounters(){
+  const maxNum = (rows, idField) => rows.reduce((m,r)=>{
+    const n = parseInt(String(r[idField]||"").replace(/[^0-9]/g,""),10);
+    return isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  DB.counters.reservation = Math.max(DB.counters.reservation, maxNum(DB.reservations,"id")+1);
+  DB.counters.sejour      = Math.max(DB.counters.sejour, maxNum(DB.sejours,"idSejour")+1);
+  DB.counters.paiement    = Math.max(DB.counters.paiement, maxNum(DB.paiements,"idPaiement")+1);
+  DB.counters.facture     = Math.max(DB.counters.facture, maxNum(DB.factures,"numeroFacture")+1);
+}
+
+/* Récupère l'état complet depuis Supabase et remplace les données locales — c'est ce qui
+   permet à la réception de voir une réservation faite depuis un autre navigateur. */
+let SB_SYNCING = false;
+async function syncFromSupabase(){
+  if(!window.sb || SB_SYNCING) return;
+  SB_SYNCING = true;
+  try{
+    const entries = Object.entries(SB_TABLES);
+    const results = await Promise.all(entries.map(([, [table]]) => window.sb.from(table).select("*")));
+    const photosByRoom = {};
+    DB.chambres.forEach(c=>{ if(c.photo) photosByRoom[c.numeroChambre] = c.photo; });
+    entries.forEach(([jsKey], i)=>{
+      const { data, error } = results[i];
+      if(error){ console.error("Supabase sync (lecture) — table", jsKey, error); return; }
+      if(!data) return;
+      DB[jsKey] = jsKey==="chambres"
+        ? data.map(c=>({ ...c, photo: photosByRoom[c.numeroChambre] || c.photo || null }))
+        : data;
+    });
+    recomputeCounters();
+    cacheLocally(DB);
+    window.dispatchEvent(new Event("tp-data-synced"));
+  }catch(e){
+    console.error("Synchronisation Supabase (lecture) échouée", e);
+  }finally{
+    SB_SYNCING = false;
+  }
+}
 
 /* ---- Photos de chambre : stockées dans IndexedDB (quota bien plus grand que LocalStorage) ---- */
 let PHOTOS_IDB = null;
@@ -328,6 +413,11 @@ function seedDB(){
 let DB = loadDB();
 function reloadDB(){ DB = loadDB(); PHOTOS_HYDRATED = false; hydratePhotos(); }
 hydratePhotos(); // charge/migre les photos depuis IndexedDB en tâche de fond, puis rafraîchit l'affichage
+
+if(window.sb){
+  syncFromSupabase(); // récupère l'état partagé au démarrage (réservations faites par d'autres, etc.)
+  setInterval(syncFromSupabase, 8000); // rafraîchissement périodique (pas de vrai temps réel, ~8s de délai)
+}
 
 /* ============================= SESSION ============================= */
 function getSession(){ try{ return JSON.parse(sessionStorage.getItem("tp_session")||"null"); }catch(e){ return null; } }
