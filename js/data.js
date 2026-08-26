@@ -68,7 +68,10 @@ async function pushDBToSupabase(db){
     const rows = db[jsKey] || [];
     try{
       if(rows.length){
-        const clean = jsKey==="chambres" ? rows.map(({photo, ...rest})=>rest) : rows;
+        const clean = rows.map(r=>{
+          const sane = sanitizeForSupabase(r, jsKey);
+          return jsKey==="chambres" ? (({photo, ...rest})=>rest)(sane) : sane;
+        });
         const { error } = await window.sb.from(table).upsert(clean, { onConflict: pk });
         if(error) console.error("Supabase upsert", table, error);
       }
@@ -134,6 +137,26 @@ function normalizeRow(row, jsKey){
   expected.forEach(k=>{
     if(out[k] === undefined && lower[k.toLowerCase()] !== undefined) out[k] = lower[k.toLowerCase()];
   });
+  // Ne jamais laisser traîner la variante en minuscules une fois l'alias posé :
+  // sinon l'objet repart avec les deux clés (ex: "idclient" ET "idClient"), ce qui
+  // fait échouer (erreur 400) la prochaine écriture vers Supabase, dont le schéma
+  // actuel utilise des colonnes entre guillemets ("idClient", "numeroChambre"...).
+  expected.forEach(k=>{
+    const lowerKey = k.toLowerCase();
+    if(lowerKey !== k && lowerKey in out) delete out[lowerKey];
+  });
+  return out;
+}
+
+/* Ne garde que les colonnes réellement attendues par le schéma Supabase actuel avant
+   tout envoi. Sert de filet de sécurité définitif contre la pollution de clés (ex:
+   une ancienne copie de DB.clients en LocalStorage qui contiendrait encore à la fois
+   "idclient" et "idClient") : même dans ce cas, seule la bonne colonne est envoyée. */
+function sanitizeForSupabase(row, jsKey){
+  const expected = SB_EXPECTED_KEYS[jsKey];
+  if(!expected) return row;
+  const out = {};
+  expected.forEach(k=>{ if(row[k] !== undefined) out[k] = row[k]; });
   return out;
 }
 
@@ -153,7 +176,7 @@ async function syncFromSupabase(){
     const results = await Promise.all(entries.map(([, [table]]) => window.sb.from(table).select("*")));
     const photosByRoom = {};
     DB.chambres.forEach(c=>{ if(c.photo) photosByRoom[c.numeroChambre] = c.photo; });
-    entries.forEach(([jsKey], i)=>{
+    entries.forEach(([jsKey, [, pk]], i)=>{
       const { data, error } = results[i];
       if(error){ console.error("Supabase sync (lecture) — table", jsKey, error); return; }
       if(!data) return;
@@ -162,9 +185,19 @@ async function syncFromSupabase(){
       // n'est pas encore initialisée ou a été réinitialisée par erreur).
       if(data.length === 0 && (DB[jsKey]||[]).length > 0) return;
       const normalized = data.map(r=>normalizeRow(r, jsKey));
+      // Garde-fou : une ligne tout juste créée localement (ex: nouveau client lors
+      // d'une inscription, réservation qui vient d'être confirmée) peut ne pas encore
+      // être remontée par Supabase au moment précis de cette lecture — la propagation
+      // de l'écriture précédente n'a pas forcément eu le temps de se terminer. On la
+      // garde le temps qu'elle apparaisse côté serveur, au lieu de la faire disparaître
+      // de la mémoire locale (ce qui viderait par exemple les infos du client en cours
+      // de réservation).
+      const remoteIds = new Set(normalized.map(r=>r[pk]));
+      const localOnly = (DB[jsKey]||[]).filter(r=>!remoteIds.has(r[pk]));
+      const merged = normalized.concat(localOnly);
       DB[jsKey] = jsKey==="chambres"
-        ? normalized.map(c=>({ ...c, photo: photosByRoom[c.numeroChambre] || c.photo || null }))
-        : normalized;
+        ? merged.map(c=>({ ...c, photo: photosByRoom[c.numeroChambre] || c.photo || null }))
+        : merged;
     });
     recomputeCounters();
     cacheLocally(DB);

@@ -268,6 +268,7 @@ function wireReserver(rawSession){
   RES_STATE = {};
   let currentSession = resolveClientSession(rawSession); // devient actif une fois la connexion / création de compte faite à l'étape 1
   const q = routeQuery();
+  const preselect = q.chambre || "";
   const goStep = (n)=>{
     [1,2,3,4,5].forEach(i=>document.getElementById("res-step-"+i).classList.toggle("hidden", i!==n));
     document.querySelectorAll("#stepper .step").forEach(s=>{
@@ -277,9 +278,14 @@ function wireReserver(rawSession){
     });
   };
 
-  // Pré-remplit et verrouille les infos de contact à partir du compte identifié
+  // Pré-remplit et verrouille les infos de contact à partir du compte identifié.
+  // Filet de sécurité : si la fiche n'est pas (encore) retrouvée par idClient
+  // (ex: juste après une création de compte), on retente par email avant d'abandonner.
   const fillInfoFromSession = ()=>{
-    const client = currentSession && currentSession.idClient ? DB.clients.find(c=>c.idClient===currentSession.idClient) : null;
+    if(!currentSession) return;
+    const client = (currentSession.idClient && DB.clients.find(c=>c.idClient===currentSession.idClient))
+      || (currentSession.email && DB.clients.find(c=>c.email.toLowerCase()===currentSession.email.toLowerCase()))
+      || null;
     if(!client) return;
     document.getElementById("c-nom").value = client.nom;
     document.getElementById("c-prenom").value = client.prenom;
@@ -433,6 +439,12 @@ function wireReserver(rawSession){
       }
       const nom = document.getElementById("c-nom"), prenom = document.getElementById("c-prenom"),
             email = document.getElementById("c-email"), tel = document.getElementById("c-tel");
+      // Filet de sécurité : si les champs n'ont pas été pré-remplis au moment du choix
+      // de la chambre (fiche client pas encore retrouvée à cet instant), on retente ici,
+      // juste avant de valider — jamais si l'un des champs contient déjà une valeur.
+      if(!nom.value.trim() && !prenom.value.trim() && !email.value.trim() && !tel.value.trim()){
+        fillInfoFromSession();
+      }
       let valid = true;
       valid = markField(nom, !!nom.value.trim()) && valid;
       valid = markField(prenom, !!prenom.value.trim()) && valid;
