@@ -110,6 +110,10 @@ async function syncFromSupabase(){
     const results = await Promise.all(entries.map(([, [table]]) => window.sb.from(table).select("*")));
     const photosByRoom = {};
     DB.chambres.forEach(c=>{ if(c.photo) photosByRoom[c.numeroChambre] = c.photo; });
+    // Empreinte des données AVANT mise à jour, pour ne notifier l'UI que si quelque chose a
+    // réellement changé (sinon un simple "echo" Realtime provoque un re-rendu inutile de la page).
+    const before = {};
+    entries.forEach(([jsKey])=>{ before[jsKey] = JSON.stringify(DB[jsKey]); });
     entries.forEach(([jsKey], i)=>{
       const { data, error } = results[i];
       if(error){ console.error("Supabase sync (lecture) — table", jsKey, error); return; }
@@ -120,7 +124,10 @@ async function syncFromSupabase(){
     });
     recomputeCounters();
     cacheLocally(DB);
-    window.dispatchEvent(new Event("tp-data-synced"));
+    const changed = entries.some(([jsKey]) => before[jsKey] !== JSON.stringify(DB[jsKey]));
+    if(changed){
+      window.dispatchEvent(new Event("tp-data-synced"));
+    }
   }catch(e){
     console.error("Synchronisation Supabase (lecture) échouée", e);
   }finally{
