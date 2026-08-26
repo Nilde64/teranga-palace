@@ -1,4 +1,3 @@
--- ============================================================================
 -- TERANGA PALACE — Schéma de base de données
 -- Dialecte : PostgreSQL (converti depuis la version SQLite de schema.sql)
 --
