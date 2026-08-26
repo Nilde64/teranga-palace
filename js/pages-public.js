@@ -164,7 +164,20 @@ function emptyState(msg){
 }
 
 /* ---------------------------- PAGE RÉSERVER ---------------------------- */
-function pageReserver(session){
+/* Si la session dit "Client" mais que le compte correspondant n'existe plus
+   dans DB.clients (ex: base réinitialisée entre-temps côté Supabase), on
+   traite la session comme invalide plutôt que de sauter à l'étape 2 avec un
+   champ email vide, en lecture seule et obligatoire : ça bloquait totalement
+   la réservation, sans aucun moyen de corriger depuis l'interface. */
+function resolveClientSession(session){
+  if(session && session.role === "Client" && !DB.clients.find(c=>c.idClient===session.idClient)){
+    return null;
+  }
+  return session;
+}
+
+function pageReserver(rawSession){
+  const session = resolveClientSession(rawSession);
   const preselect = routeQuery().chambre || "";
   const prefill = session && session.role==="Client" ? DB.clients.find(c=>c.idClient===session.idClient) : null;
   return `
@@ -251,9 +264,9 @@ function pageReserver(session){
 }
 
 let RES_STATE = {};
-function wireReserver(session){
+function wireReserver(rawSession){
   RES_STATE = {};
-  let currentSession = session; // devient actif une fois la connexion / création de compte faite à l'étape 1
+  let currentSession = resolveClientSession(rawSession); // devient actif une fois la connexion / création de compte faite à l'étape 1
   const q = routeQuery();
   const goStep = (n)=>{
     [1,2,3,4,5].forEach(i=>document.getElementById("res-step-"+i).classList.toggle("hidden", i!==n));
