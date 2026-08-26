@@ -414,9 +414,35 @@ let DB = loadDB();
 function reloadDB(){ DB = loadDB(); PHOTOS_HYDRATED = false; hydratePhotos(); }
 hydratePhotos(); // charge/migre les photos depuis IndexedDB en tâche de fond, puis rafraîchit l'affichage
 
+/* Débounce : quand plusieurs changements arrivent d'un coup (ex: réservation +
+   séjour + facture créés en rafale), on ne relance qu'une seule synchronisation
+   au lieu d'une par table touchée. */
+let SB_REALTIME_DEBOUNCE = null;
+function scheduleSyncFromSupabase(){
+  clearTimeout(SB_REALTIME_DEBOUNCE);
+  SB_REALTIME_DEBOUNCE = setTimeout(syncFromSupabase, 150);
+}
+
+/* Écoute en temps réel (WebSocket) les changements sur les tables partagées :
+   dès qu'un client confirme une réservation sur un autre appareil/navigateur,
+   Supabase pousse l'événement ici et la réception voit la mise à jour
+   quasi instantanément (au lieu d'attendre le prochain polling). */
+function subscribeRealtime(){
+  if(!window.sb) return;
+  const channel = window.sb.channel("tp-realtime-sync");
+  Object.values(SB_TABLES).forEach(([table])=>{
+    channel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleSyncFromSupabase);
+  });
+  channel.subscribe((status)=>{
+    if(status === "SUBSCRIBED") console.info("Realtime Supabase actif : synchronisation instantanée.");
+    else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT") console.warn("Realtime Supabase indisponible, le polling de secours prend le relais.", status);
+  });
+}
+
 if(window.sb){
   syncFromSupabase(); // récupère l'état partagé au démarrage (réservations faites par d'autres, etc.)
-  setInterval(syncFromSupabase, 8000); // rafraîchissement périodique (pas de vrai temps réel, ~8s de délai)
+  subscribeRealtime(); // synchronisation instantanée dès qu'une donnée change côté serveur
+  setInterval(syncFromSupabase, 30000); // filet de secours si le Realtime se déconnecte (WiFi coupé, etc.)
 }
 
 /* ============================= SESSION ============================= */
