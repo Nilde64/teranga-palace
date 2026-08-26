@@ -1,5 +1,15 @@
 # Base de données — Teranga Palace
 
+> ⚠️ **Pour Supabase, utilise UNIQUEMENT ces 3 fichiers, dans cet ordre :**
+> 1. `supabase_schema.sql` — crée les tables (colonnes entre guillemets, casse respectée)
+> 2. `seed_supabase.sql` — données de démonstration compatibles avec ce schéma
+> 3. `enable_realtime.sql` — active la synchronisation instantanée
+>
+> Ne PAS utiliser `schema-postgresql.OBSOLETE.sql.bak` ni `seed.sql` avec Supabase :
+> ce sont d'anciens fichiers écrits pour une autre variante de schéma (colonnes non
+> protégées par des guillemets → PostgreSQL les met en minuscules, ce qui casse
+> l'affichage des prix/numéros de chambre côté application).
+
 Base de données relationnelle fidèle au diagramme de classes UML fourni.
 
 ## Fichiers
@@ -7,8 +17,11 @@ Base de données relationnelle fidèle au diagramme de classes UML fourni.
 | Fichier               | Rôle |
 |------------------------|------|
 | `schema.sql`            | Structure de la base (tables, contraintes, index, vues, triggers) |
-| `seed.sql`               | Données de démonstration (identiques à celles de l'application) |
+| `seed.sql`               | Données de démonstration (identiques à celles de l'application) — **variante SQLite, pas Supabase** |
 | `teranga_palace.db`       | Base SQLite déjà construite et prête à l'emploi |
+| `supabase_schema.sql`    | Structure de la base pour **Supabase/PostgreSQL** (à utiliser en priorité) |
+| `seed_supabase.sql`      | Données de démonstration pour **Supabase/PostgreSQL** |
+| `enable_realtime.sql`    | Active la synchronisation instantanée (Realtime) sur Supabase |
 
 ## Relations (conformes au document UML)
 

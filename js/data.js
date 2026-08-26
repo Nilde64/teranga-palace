@@ -111,6 +111,32 @@ function sbSnapshot(){
   return JSON.stringify(snap);
 }
 
+/* Filet de sécurité : si un jour le schéma SQL est recréé avec des noms de colonnes
+   qui ne respectent pas exactement la casse attendue (ex: "numerochambre" au lieu de
+   "numeroChambre", parce qu'une requête SQL a été écrite sans guillemets — Postgres
+   met alors tout en minuscules), on retombe quand même sur nos pattes ici au lieu
+   d'afficher silencieusement "undefined"/"NaN" partout dans l'interface. */
+const SB_EXPECTED_KEYS = {
+  clients:      ["idClient","nom","prenom","telephone","email","adresse"],
+  chambres:     ["numeroChambre","type","prixParNuit","capacite","statut","description","photo","hasPhoto"],
+  users:        ["email","password","role","idClient"],
+  reservations: ["id","idClient","numeroChambre","dateArrivee","dateDepart","nbPersonnes","montant","statut","dateCreation"],
+  sejours:      ["idSejour","idReservation","idClient","numeroChambre","dateArriveeReelle","dateDepartReelle","montantTotal","statut"],
+  paiements:    ["idPaiement","idSejour","datePaiement","montant","modePaiement"],
+  factures:     ["numeroFacture","idSejour","dateFacture","montantTotal","statut"]
+};
+function normalizeRow(row, jsKey){
+  const expected = SB_EXPECTED_KEYS[jsKey];
+  if(!expected) return row;
+  const lower = {};
+  Object.keys(row).forEach(k=>{ lower[k.toLowerCase()] = row[k]; });
+  const out = { ...row };
+  expected.forEach(k=>{
+    if(out[k] === undefined && lower[k.toLowerCase()] !== undefined) out[k] = lower[k.toLowerCase()];
+  });
+  return out;
+}
+
 /* Récupère l'état complet depuis Supabase et remplace les données locales — c'est ce qui
    permet à la réception de voir une réservation faite depuis un autre navigateur.
    L'événement tp-data-synced (qui déclenche un re-rendu complet de la page) n'est émis
@@ -131,9 +157,14 @@ async function syncFromSupabase(){
       const { data, error } = results[i];
       if(error){ console.error("Supabase sync (lecture) — table", jsKey, error); return; }
       if(!data) return;
+      // Garde-fou : si Supabase renvoie une table vide alors qu'on a déjà des données
+      // locales, on ne les efface pas (évite un écrasement total si la base distante
+      // n'est pas encore initialisée ou a été réinitialisée par erreur).
+      if(data.length === 0 && (DB[jsKey]||[]).length > 0) return;
+      const normalized = data.map(r=>normalizeRow(r, jsKey));
       DB[jsKey] = jsKey==="chambres"
-        ? data.map(c=>({ ...c, photo: photosByRoom[c.numeroChambre] || c.photo || null }))
-        : data;
+        ? normalized.map(c=>({ ...c, photo: photosByRoom[c.numeroChambre] || c.photo || null }))
+        : normalized;
     });
     recomputeCounters();
     cacheLocally(DB);
