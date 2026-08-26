@@ -99,21 +99,34 @@ function recomputeCounters(){
   DB.counters.facture     = Math.max(DB.counters.facture, maxNum(DB.factures,"numeroFacture")+1);
 }
 
+/* Empreinte légère des tables partagées (sans les photos, jamais synchronisées ici),
+   utilisée pour détecter si une synchronisation a réellement changé quelque chose. */
+function sbSnapshot(){
+  const snap = {};
+  for(const jsKey of Object.keys(SB_TABLES)){
+    snap[jsKey] = jsKey === "chambres"
+      ? (DB.chambres||[]).map(({photo, ...rest})=>rest)
+      : DB[jsKey];
+  }
+  return JSON.stringify(snap);
+}
+
 /* Récupère l'état complet depuis Supabase et remplace les données locales — c'est ce qui
-   permet à la réception de voir une réservation faite depuis un autre navigateur. */
+   permet à la réception de voir une réservation faite depuis un autre navigateur.
+   L'événement tp-data-synced (qui déclenche un re-rendu complet de la page) n'est émis
+   que si quelque chose a réellement changé : sinon, avec le Realtime qui peut renvoyer
+   l'écho de nos propres écritures quasi instantanément, la page se reconstruirait en
+   boucle pour rien (effet de "bégaiement" à l'écran, y compris pendant la saisie). */
 let SB_SYNCING = false;
 async function syncFromSupabase(){
   if(!window.sb || SB_SYNCING) return;
   SB_SYNCING = true;
   try{
+    const before = sbSnapshot();
     const entries = Object.entries(SB_TABLES);
     const results = await Promise.all(entries.map(([, [table]]) => window.sb.from(table).select("*")));
     const photosByRoom = {};
     DB.chambres.forEach(c=>{ if(c.photo) photosByRoom[c.numeroChambre] = c.photo; });
-    // Empreinte des données AVANT mise à jour, pour ne notifier l'UI que si quelque chose a
-    // réellement changé (sinon un simple "echo" Realtime provoque un re-rendu inutile de la page).
-    const before = {};
-    entries.forEach(([jsKey])=>{ before[jsKey] = JSON.stringify(DB[jsKey]); });
     entries.forEach(([jsKey], i)=>{
       const { data, error } = results[i];
       if(error){ console.error("Supabase sync (lecture) — table", jsKey, error); return; }
@@ -124,8 +137,7 @@ async function syncFromSupabase(){
     });
     recomputeCounters();
     cacheLocally(DB);
-    const changed = entries.some(([jsKey]) => before[jsKey] !== JSON.stringify(DB[jsKey]));
-    if(changed){
+    if(sbSnapshot() !== before){
       window.dispatchEvent(new Event("tp-data-synced"));
     }
   }catch(e){
