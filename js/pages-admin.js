@@ -22,6 +22,8 @@ function pageDashboard(session){
 
   return `
   ${adminHeader("Dashboard", "Vue d'ensemble de l'activité de Teranga Palace")}
+  ${checkinAlertsBanner()}
+  ${checkoutAlertsBanner()}
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-label">${ic('bed')} Chambres totales</div><div class="stat-value">${totalChambres}</div></div>
     <div class="stat-card accent"><div class="stat-label">${ic('check')} Disponibles</div><div class="stat-value">${disponibles}</div></div>
@@ -71,7 +73,13 @@ function barRow(label, value, max){
     <div style="background:var(--ivoire);height:8px;border-radius:4px;overflow:hidden;"><div style="background:var(--or);height:100%;width:${(value/max)*100}%;"></div></div>
   </div>`;
 }
-function wireDashboard(){}
+function wireDashboard(){
+  const banner1 = document.getElementById("admin-content").querySelector(".panel[style*='fff8e6']");
+  const banner2 = document.getElementById("admin-content").querySelector(".panel[style*='eaf3fb']");
+  const rerender = ()=>{ document.getElementById("admin-content").innerHTML = pageDashboard(); wireDashboard(); };
+  if(banner1) wireCheckinAlertsBanner(banner1, rerender);
+  if(banner2) wireCheckoutAlertsBanner(banner2, rerender);
+}
 
 /* ---- CLIENTS ---- */
 function pageAdminClients(){
@@ -314,14 +322,100 @@ function roomFormModal(room, refresh){
 /* ---- RÉSERVATIONS (admin) ---- */
 function pageAdminReservations(){
   return `${adminHeader("Réservations","Ensemble des réservations de l'hôtel", `<a href="#/reserver" class="btn btn-gold btn-sm">+ Nouvelle réservation</a>`)}
+  ${checkinAlertsBanner()}
+  ${checkoutAlertsBanner()}
   <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-    ${["Toutes","Confirmée","Annulée","Terminée"].map(s=>`<button class="btn btn-sm ${s==='Toutes'?'btn-dark':'btn-outline'}" data-res-filter="${s}">${s}</button>`).join("")}
+    ${["Toutes","Confirmée","Annulée","Terminée","No-show"].map(s=>`<button class="btn btn-sm ${s==='Toutes'?'btn-dark':'btn-outline'}" data-res-filter="${s}">${s}</button>`).join("")}
     <input type="text" id="res-search" placeholder="Rechercher (ID, client)..." style="margin-left:auto;padding:9px 12px;border:1px solid rgba(11,27,46,.16);min-width:220px;">
   </div>
   <div class="table-wrap"><table>
-    <thead><tr><th>ID</th><th>Client</th><th>Chambre</th><th>Arrivée</th><th>Départ</th><th>Pers.</th><th>Montant</th><th>Statut</th><th>Actions</th></tr></thead>
+    <thead><tr><th>ID</th><th>Client</th><th>Chambre</th><th>Arrivée</th><th>Départ</th><th>Pers.</th><th>Montant</th><th>Statut</th><th>Paiement</th><th>Actions</th></tr></thead>
     <tbody id="res-tbody"></tbody>
   </table></div>`;
+}
+
+// Bannière d'alerte Réception : liste les clients attendus aujourd'hui (arrivée du
+// jour, réservation encore Confirmée, pas encore enregistrés en check-in). Réutilisée
+// sur le Dashboard et sur la page Réservations pour ne rien manquer.
+function checkinAlertsBanner(){
+  const arrivals = todaysArrivals();
+  if(!arrivals.length) return "";
+  return `<div class="panel" style="border:1px solid #e0b64c66;background:#fff8e6;margin-bottom:20px;">
+    <h4 style="margin-bottom:12px;font-size:15px;color:#7a5b12;">⚠️ ${arrivals.length} check-in prévu(s) aujourd'hui</h4>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${arrivals.map(r=>{
+        const c = DB.clients.find(cl=>cl.idClient===r.idClient);
+        return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13.5px;">
+          <span>Check-in prévu aujourd'hui — Le client <b>${c?c.prenom+' '+c.nom:'—'}</b> est attendu pour la chambre <b>N° ${r.numeroChambre}</b> (${r.id}).</span>
+          <span style="display:flex;gap:8px;">
+            <button class="btn btn-gold btn-sm" data-alert-checkin="${r.id}">${ic('arrowIn')} Client arrivé</button>
+            <button class="btn btn-outline btn-sm" data-alert-noshow="${r.id}">Client absent</button>
+          </span>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+function wireCheckinAlertsBanner(container, onDone){
+  container.querySelectorAll("[data-alert-checkin]").forEach(b=>{
+    b.onclick = ()=>{
+      const r = checkinReservation(b.dataset.alertCheckin);
+      if(!r.ok){ toast("Check-in impossible", r.error, true); return; }
+      toast("Arrivée enregistrée","Séjour "+r.sejour.idSejour+" créé.");
+      onDone();
+    };
+  });
+  container.querySelectorAll("[data-alert-noshow]").forEach(b=>{
+    b.onclick = ()=>{
+      if(!confirm("Confirmer que ce client ne s'est pas présenté ? La réservation passera au statut No-show et la chambre redeviendra disponible.")) return;
+      const r = markNoShow(b.dataset.alertNoshow);
+      if(!r.ok){ toast("Action impossible", r.error, true); return; }
+      toast("Client marqué absent","Réservation "+r.reservation.id+" passée en No-show, chambre libérée.");
+      onDone();
+    };
+  });
+}
+
+// Bannière d'alerte Réception : liste les séjours dont le départ est prévu
+// aujourd'hui et qui ne sont pas encore réellement check-outés.
+function checkoutAlertsBanner(){
+  const checkouts = todaysCheckouts();
+  if(!checkouts.length) return "";
+  return `<div class="panel" style="border:1px solid #6fa7d666;background:#eaf3fb;margin-bottom:20px;">
+    <h4 style="margin-bottom:12px;font-size:15px;color:#1f4f74;">⚠️ ${checkouts.length} check-out prévu(s) aujourd'hui</h4>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${checkouts.map(s=>{
+        const c = DB.clients.find(cl=>cl.idClient===s.idClient);
+        const r = DB.reservations.find(x=>x.id===s.idReservation);
+        const retard = s.presenceSignalee ? `<div style="font-size:12px;color:#a35b00;margin-top:4px;">⏳ Départ retardé signalé le ${fmtDate(s.dateSignalement)} — client toujours présent.</div>` : "";
+        return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13.5px;">
+          <span>Check-out prévu aujourd'hui — Le client <b>${c?c.prenom+' '+c.nom:'—'}</b> doit effectuer son départ de la chambre <b>N° ${s.numeroChambre}</b> (${r?r.id:s.idReservation}).${retard}</span>
+          <span style="display:flex;gap:8px;">
+            <button class="btn btn-gold btn-sm" data-alert-checkout="${s.idSejour}">${ic('arrowIn')} Check-out effectué</button>
+            <button class="btn btn-outline btn-sm" data-alert-still-present="${s.idSejour}">Client toujours présent</button>
+          </span>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+function wireCheckoutAlertsBanner(container, onDone){
+  container.querySelectorAll("[data-alert-checkout]").forEach(b=>{
+    b.onclick = ()=>{
+      const r = checkoutSejour(b.dataset.alertCheckout);
+      if(!r.ok){ toast("Check-out impossible", r.error, true); return; }
+      toast("Départ enregistré","La chambre est de nouveau disponible.");
+      onDone();
+    };
+  });
+  container.querySelectorAll("[data-alert-still-present]").forEach(b=>{
+    b.onclick = ()=>{
+      const r = signalerDepartRetarde(b.dataset.alertStillPresent);
+      if(!r.ok){ toast("Action impossible", r.error, true); return; }
+      toast("Situation signalée","Le départ retardé du client a été noté. Vous pouvez gérer la situation (prolongation, supplément...).");
+      onDone();
+    };
+  });
 }
 function reservationAdminRows(filter, search){
   let list = (!filter||filter==="Toutes") ? DB.reservations : DB.reservations.filter(r=>r.statut===filter);
@@ -333,7 +427,7 @@ function reservationAdminRows(filter, search){
     });
   }
   list = [...list].sort((a,b)=>b.dateCreation.localeCompare(a.dateCreation));
-  if(!list.length) return `<tr><td colspan="9">${emptyState("Aucune réservation trouvée.")}</td></tr>`;
+  if(!list.length) return `<tr><td colspan="10">${emptyState("Aucune réservation trouvée.")}</td></tr>`;
   // Détecte les réservations Confirmées qui se chevauchent sur une même chambre
   // (double réservation). En temps normal ceci ne devrait plus arriver grâce au
   // contrôle de disponibilité fait à la création, mais ça reste utile pour repérer
@@ -351,22 +445,52 @@ function reservationAdminRows(filter, search){
   }
   return list.map(r=>{
     const c = DB.clients.find(cl=>cl.idClient===r.idClient);
-    const badge = r.statut==="Confirmée" ? '<span class="badge badge-green">Confirmée</span>' : r.statut==="Annulée" ? '<span class="badge badge-red">Annulée</span>' : '<span class="badge badge-blue">Terminée</span>';
+    const badge = r.statut==="Confirmée" ? '<span class="badge badge-green">Confirmée</span>'
+      : r.statut==="Annulée" ? '<span class="badge badge-red">Annulée</span>'
+      : r.statut==="No-show" ? '<span class="badge badge-gray">No-show</span>'
+      : '<span class="badge badge-blue">Terminée</span>';
     const conflict = conflictIds.has(r.id) ? ` <span class="badge badge-red" title="Une autre réservation confirmée existe sur cette chambre pour des dates qui se chevauchent.">⚠ Double réservation</span>` : "";
-    return `<tr><td><b>${r.id}</b></td><td>${c?c.prenom+' '+c.nom:'—'}</td><td>N° ${r.numeroChambre}${conflict}</td><td>${fmtDate(r.dateArrivee)}</td><td>${fmtDate(r.dateDepart)}</td><td>${r.nbPersonnes}</td><td>${fmtMoney(r.montant)}</td><td>${badge}</td>
+    // Statut de paiement (disponible seulement une fois le séjour/la facture créés au check-out)
+    const sejour = DB.sejours.find(s=>s.idReservation===r.id);
+    const facture = sejour ? DB.factures.find(f=>f.idSejour===sejour.idSejour) : null;
+    const paiementBadge = facture
+      ? (facture.statut==="Payée" ? '<span class="badge badge-green">Payée</span>'
+        : facture.statut==="Partiellement payée" ? '<span class="badge badge-gold">Partielle</span>'
+        : '<span class="badge badge-red">Non payée</span>')
+      : (sejour ? '<span class="badge badge-gray">En attente</span>' : '<span class="badge badge-gray">—</span>');
+    return `<tr><td><b>${r.id}</b></td><td>${c?c.prenom+' '+c.nom:'—'}</td><td>N° ${r.numeroChambre}${conflict}</td><td>${fmtDate(r.dateArrivee)}</td><td>${fmtDate(r.dateDepart)}</td><td>${r.nbPersonnes}</td><td>${fmtMoney(r.montant)}</td><td>${badge}</td><td>${paiementBadge}</td>
     <td class="row-actions">
       <button class="btn btn-outline btn-sm" data-view-res="${r.id}">Voir</button>
-      ${r.statut==="Confirmée" ? `<button class="btn btn-outline btn-sm" data-modify="${r.id}">Modifier</button><button class="btn btn-danger btn-sm" data-cancel="${r.id}">Annuler</button>` : ""}
+      ${r.statut==="Confirmée" ? `<button class="btn btn-outline btn-sm" data-modify="${r.id}">Modifier</button><button class="btn btn-outline btn-sm" data-noshow="${r.id}">Absent</button><button class="btn btn-danger btn-sm" data-cancel="${r.id}">Annuler</button>` : ""}
     </td></tr>`;
   }).join("");
 }
 function wireAdminReservations(){
+  // Petit utilitaire générique pour rafraîchir une bannière d'alerte (check-in ou
+  // check-out) sans reconstruire toute la page : on la retrouve via un fragment
+  // de son style inline, on la remplace ou on l'ajoute/l'enlève selon le besoin.
+  const makeBannerRefresher = (styleMatch, bannerFn, wireFn)=>{
+    const refreshThis = ()=>{
+      const container = document.getElementById("admin-content");
+      const old = container.querySelector(`.panel[style*='${styleMatch}']`);
+      const fresh = document.createElement("div");
+      fresh.innerHTML = bannerFn();
+      const newBanner = fresh.firstElementChild;
+      if(old && newBanner){ old.replaceWith(newBanner); wireFn(newBanner, ()=>{ refreshThis(); refresh(); }); }
+      else if(old && !newBanner){ old.remove(); }
+      else if(!old && newBanner){ document.querySelector(".admin-topline").after(newBanner); wireFn(newBanner, ()=>{ refreshThis(); refresh(); }); }
+    };
+    return refreshThis;
+  };
+  const refreshCheckinBanner = makeBannerRefresher("fff8e6", checkinAlertsBanner, wireCheckinAlertsBanner);
+  const refreshCheckoutBanner = makeBannerRefresher("eaf3fb", checkoutAlertsBanner, wireCheckoutAlertsBanner);
+  const refreshBanner = ()=>{ refreshCheckinBanner(); refreshCheckoutBanner(); };
   const refresh = ()=>{
     const active = document.querySelector("[data-res-filter].btn-dark");
     const f = active ? active.dataset.resFilter : "Toutes";
     const s = document.getElementById("res-search").value;
     document.getElementById("res-tbody").innerHTML = reservationAdminRows(f,s);
-    wireReservationActions(document.getElementById("res-tbody"), refresh);
+    wireReservationActions(document.getElementById("res-tbody"), ()=>{ refresh(); refreshBanner(); });
     document.querySelectorAll("[data-view-res]").forEach(b=>b.onclick = ()=>{
       const r = DB.reservations.find(x=>x.id===b.dataset.viewRes);
       const c = DB.clients.find(cl=>cl.idClient===r.idClient);
@@ -382,6 +506,12 @@ function wireAdminReservations(){
     });
   };
   refresh();
+  // Câble les bannières déjà présentes dans le HTML initial de la page (rendues par
+  // pageAdminReservations avant l'appel à cette fonction).
+  const initialCheckinBanner = document.getElementById("admin-content").querySelector(".panel[style*='fff8e6']");
+  if(initialCheckinBanner) wireCheckinAlertsBanner(initialCheckinBanner, ()=>{ refreshBanner(); refresh(); });
+  const initialCheckoutBanner = document.getElementById("admin-content").querySelector(".panel[style*='eaf3fb']");
+  if(initialCheckoutBanner) wireCheckoutAlertsBanner(initialCheckoutBanner, ()=>{ refreshBanner(); refresh(); });
   document.querySelectorAll("[data-res-filter]").forEach(btn=>{
     btn.onclick = ()=>{
       document.querySelectorAll("[data-res-filter]").forEach(b=>{ b.classList.remove("btn-dark"); b.classList.add("btn-outline"); });
@@ -395,6 +525,8 @@ function wireAdminReservations(){
 /* ---- CHECK-IN ---- */
 function pageAdminCheckin(){
   return `${adminHeader("Arrivée / Check-in","Enregistrer l'arrivée d'un client")}
+  ${checkinAlertsBanner()}
+  ${checkoutAlertsBanner()}
   <div class="panel" style="max-width:640px;">
     <div class="field"><label>Identifiant de réservation ou nom du client</label><input type="text" id="ci-search" placeholder="TP-2026-00101 ou nom du client"></div>
     <button class="btn btn-gold" id="btn-ci-search">${ic('search')} Rechercher</button>
@@ -402,6 +534,11 @@ function pageAdminCheckin(){
   </div>`;
 }
 function wireAdminCheckin(){
+  const rerender = ()=>{ document.getElementById("admin-content").innerHTML = pageAdminCheckin(); wireAdminCheckin(); };
+  const banner1 = document.getElementById("admin-content").querySelector(".panel[style*='fff8e6']");
+  if(banner1) wireCheckinAlertsBanner(banner1, rerender);
+  const banner2 = document.getElementById("admin-content").querySelector(".panel[style*='eaf3fb']");
+  if(banner2) wireCheckoutAlertsBanner(banner2, rerender);
   document.getElementById("btn-ci-search").onclick = ()=>{
     const q = document.getElementById("ci-search").value.trim().toLowerCase();
     const resultEl = document.getElementById("ci-result");
@@ -422,13 +559,23 @@ function wireAdminCheckin(){
       <div class="panel">
         <div style="font-family:var(--serif);font-size:19px;">${match.id}</div>
         <div style="font-size:13px;color:var(--text-soft);margin:8px 0 16px;">${c.prenom} ${c.nom} · Chambre ${chambre.type} N° ${chambre.numeroChambre} · ${fmtDate(match.dateArrivee)} → ${fmtDate(match.dateDepart)}</div>
-        <button class="btn btn-gold" id="btn-do-checkin">${ic('arrowIn')} Enregistrer l'arrivée — Chambre attribuée</button>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn btn-gold" id="btn-do-checkin">${ic('arrowIn')} Enregistrer l'arrivée — Chambre attribuée</button>
+          <button class="btn btn-outline" id="btn-do-noshow">Client absent (No-show)</button>
+        </div>
       </div>`;
     document.getElementById("btn-do-checkin").onclick = ()=>{
       const r = checkinReservation(match.id);
       if(!r.ok){ toast("Check-in impossible", r.error, true); return; }
       toast("Arrivée enregistrée","Séjour "+r.sejour.idSejour+" créé, chambre "+chambre.numeroChambre+" occupée.");
       resultEl.innerHTML = `<div class="empty-state">${ic('check')}<h4>Client enregistré</h4><p>Séjour ${r.sejour.idSejour} créé pour la chambre ${chambre.numeroChambre}.</p></div>`;
+    };
+    document.getElementById("btn-do-noshow").onclick = ()=>{
+      if(!confirm("Confirmer que ce client ne s'est pas présenté ? La réservation passera au statut \"No-show\" et la chambre "+chambre.numeroChambre+" redeviendra disponible.")) return;
+      const r = markNoShow(match.id);
+      if(!r.ok){ toast("Action impossible", r.error, true); return; }
+      toast("Client marqué absent","Réservation "+r.reservation.id+" passée en No-show, chambre "+chambre.numeroChambre+" libérée.");
+      resultEl.innerHTML = `<div class="empty-state">${ic('empty')}<h4>Client marqué absent</h4><p>La réservation ${r.reservation.id} est maintenant "No-show".</p></div>`;
     };
   };
 }
@@ -457,6 +604,7 @@ function wireAdminSejours(){ document.getElementById("sej-tbody").innerHTML = se
 function pageAdminCheckout(){
   const ouverts = DB.sejours.filter(s=>s.statut==="En cours");
   return `${adminHeader("Départ / Check-out","Clôturer un séjour et générer la facture")}
+  ${checkoutAlertsBanner()}
   <div class="table-wrap"><table>
     <thead><tr><th>ID Séjour</th><th>Client</th><th>Chambre</th><th>Arrivée</th><th>Payé</th><th>Montant dû</th><th>Actions</th></tr></thead>
     <tbody>${ouverts.length ? ouverts.map(s=>{
@@ -468,6 +616,8 @@ function pageAdminCheckout(){
   </table></div>`;
 }
 function wireAdminCheckout(){
+  const banner = document.getElementById("admin-content").querySelector(".panel[style*='eaf3fb']");
+  if(banner) wireCheckoutAlertsBanner(banner, pageAdminCheckoutRefresh);
   document.querySelectorAll("[data-checkout]").forEach(b=>b.onclick = ()=>{
     const s = DB.sejours.find(x=>x.idSejour===b.dataset.checkout);
     const paye = DB.paiements.filter(p=>p.idSejour===s.idSejour).reduce((sum,p)=>sum+p.montant,0);

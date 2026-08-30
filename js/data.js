@@ -131,7 +131,7 @@ const SB_EXPECTED_KEYS = {
   chambres:     ["numeroChambre","type","prixParNuit","capacite","statut","description","photo","hasPhoto"],
   users:        ["email","password","role","idClient"],
   reservations: ["id","idClient","numeroChambre","dateArrivee","dateDepart","nbPersonnes","montant","statut","dateCreation"],
-  sejours:      ["idSejour","idReservation","idClient","numeroChambre","dateArriveeReelle","dateDepartReelle","montantTotal","statut"],
+  sejours:      ["idSejour","idReservation","idClient","numeroChambre","dateArriveeReelle","dateDepartReelle","montantTotal","statut","presenceSignalee","dateSignalement"],
   paiements:    ["idPaiement","idSejour","datePaiement","montant","modePaiement"],
   factures:     ["numeroFacture","idSejour","dateFacture","montantTotal","statut"]
 };
@@ -207,7 +207,8 @@ async function syncFromSupabase(){
         : merged;
     });
     recomputeCounters();
-    cacheLocally(DB);
+    const expired = autoExpireNoShows(); // peut faire passer certaines réservations en No-show (voir plus haut)
+    if(!expired) cacheLocally(DB); // sinon autoExpireNoShows() s'en est déjà chargé (cache + réplication Supabase)
     if(sbSnapshot() !== before){
       window.dispatchEvent(new Event("tp-data-synced"));
     }
@@ -500,8 +501,29 @@ function seedDB(){
   return db;
 }
 
+// Règle automatique de No-show : toute réservation encore "Confirmée" dont la date
+// de Check-in est strictement dans le passé, et pour laquelle aucun check-in n'a
+// réellement été enregistré (pas de séjour ouvert lié), est automatiquement
+// considérée comme un No-show — la chambre redevient donc immédiatement
+// disponible pour d'autres clients, sans aucune action manuelle du réceptionniste.
+// Important : une réservation dont le check-in A été effectué (un séjour existe)
+// n'est jamais concernée, quelle que soit la date de départ prévue.
+function autoExpireNoShows(){
+  const today = todayStr();
+  let changed = false;
+  DB.reservations.forEach(r=>{
+    if(r.statut==="Confirmée" && r.dateArrivee < today && !DB.sejours.some(s=>s.idReservation===r.id)){
+      r.statut = "No-show";
+      changed = true;
+    }
+  });
+  if(changed) persist(DB); // sauvegarde locale + réplication Supabase, seulement si un changement a réellement eu lieu
+  return changed;
+}
+
 let DB = loadDB();
-function reloadDB(){ DB = loadDB(); PHOTOS_HYDRATED = false; hydratePhotos(); }
+autoExpireNoShows(); // applique la règle tout de suite au chargement (ex: navigateur resté fermé plusieurs jours)
+function reloadDB(){ DB = loadDB(); autoExpireNoShows(); PHOTOS_HYDRATED = false; hydratePhotos(); }
 hydratePhotos(); // charge/migre les photos depuis IndexedDB en tâche de fond, puis rafraîchit l'affichage
 
 /* Débounce : quand plusieurs changements arrivent d'un coup (ex: réservation +
@@ -534,6 +556,15 @@ if(window.sb){
   subscribeRealtime(); // synchronisation instantanée dès qu'une donnée change côté serveur
   setInterval(syncFromSupabase, 30000); // filet de secours si le Realtime se déconnecte (WiFi coupé, etc.)
 }
+
+// Filet de sécurité local, indépendant de Supabase : si l'application reste ouverte
+// à cheval sur un changement de jour (ex: laissée ouverte toute la nuit à la
+// réception), on re-vérifie régulièrement les No-show plutôt que d'attendre un
+// prochain rechargement de page. Si un changement a lieu, l'affichage courant se
+// met à jour comme pour toute autre synchronisation.
+setInterval(()=>{
+  if(autoExpireNoShows() && typeof render === "function" && (typeof shouldSkipBackgroundRerender !== "function" || !shouldSkipBackgroundRerender())) render();
+}, 60000);
 
 /* ============================= SESSION ============================= */
 function getSession(){ try{ return JSON.parse(sessionStorage.getItem("tp_session")||"null"); }catch(e){ return null; } }
@@ -585,8 +616,8 @@ function findOrCreateClient({nom,prenom,email,telephone,adresse}){
   return c;
 }
 
-function createReservation({idClient, numeroChambre, dateArrivee, dateDepart, nbPersonnes}){
-  // Sécurité : re-vérification finale avant confirmation (empêche la double réservation)
+async function createReservation({idClient, numeroChambre, dateArrivee, dateDepart, nbPersonnes}){
+  // 1) Vérification rapide sur la copie locale (retour immédiat si déjà visiblement indisponible).
   if(!isRoomAvailable(numeroChambre, dateArrivee, dateDepart)){
     return {ok:false, error:"Cette chambre vient d'être réservée. Veuillez sélectionner une autre chambre."};
   }
@@ -594,7 +625,78 @@ function createReservation({idClient, numeroChambre, dateArrivee, dateDepart, nb
   const nuits = nightsBetween(dateArrivee, dateDepart);
   const id = "TP-2026-"+pad(DB.counters.reservation++,5);
   const r = {id, idClient, numeroChambre, dateArrivee, dateDepart, nbPersonnes, montant:nuits*chambre.prixParNuit, statut:"Confirmée", dateCreation: todayStr()};
+
+  // 2) Vérification DÉFINITIVE côté serveur partagé (Supabase), avant d'annoncer un
+  //    succès à l'utilisateur. La copie locale du navigateur peut être légèrement en
+  //    retard : si une autre personne, sur un autre appareil, vient de réserver la
+  //    même chambre pour des dates qui se chevauchent, ce n'est parfois visible dans
+  //    notre copie locale qu'après la prochaine synchronisation. On insère donc
+  //    directement dans Supabase et on laisse le trigger SQL "trg_no_overlap_fn"
+  //    (voir database/supabase_schema.sql) arbitrer en cas de conflit réel : s'il
+  //    rejette l'insertion, on ne confirme PAS la réservation côté client.
+  if(window.sb){
+    try{
+      const { error } = await window.sb.from("reservations").insert(sanitizeForSupabase(r, "reservations"));
+      if(error){
+        DB.counters.reservation--; // l'identifiant réservé n'a pas été utilisé, on le rend au compteur
+        console.error("Réservation refusée par le serveur (conflit de disponibilité)", error);
+        return {ok:false, error:"Cette chambre vient d'être réservée par une autre personne à l'instant. Veuillez choisir une autre chambre ou d'autres dates."};
+      }
+    }catch(e){
+      // Pas de connexion à la base partagée (hors-ligne, Supabase non joignable) : on
+      // continue en mode dégradé, avec uniquement la protection locale ci-dessus.
+      console.error("Impossible de vérifier la réservation auprès du serveur partagé, poursuite en mode local.", e);
+    }
+  }
   DB.reservations.push(r);
+  save();
+  return {ok:true, reservation:r};
+}
+
+// Réservations dont l'arrivée est prévue aujourd'hui, encore "Confirmée" et pas
+// encore enregistrées en check-in (pas de séjour ouvert) : sert à l'alerte Réception.
+function todaysArrivals(){
+  const today = todayStr();
+  return DB.reservations.filter(r=>
+    r.statut==="Confirmée" &&
+    r.dateArrivee===today &&
+    !DB.sejours.some(s=>s.idReservation===r.id)
+  );
+}
+
+// Séjours dont le départ était prévu aujourd'hui (date de la réservation d'origine),
+// toujours "En cours" (pas encore réellement check-outés) : sert à l'alerte Réception.
+// On s'appuie sur la date de départ PRÉVUE (celle de la réservation), pas seulement
+// sur la date de check-in réelle, car un séjour peut durer plusieurs nuits.
+function todaysCheckouts(){
+  const today = todayStr();
+  return DB.sejours.filter(s=>{
+    if(s.statut!=="En cours" || s.dateDepartReelle) return false;
+    const r = DB.reservations.find(x=>x.id===s.idReservation);
+    return r && r.dateDepart===today;
+  });
+}
+
+// Le réceptionniste signale que le client n'a pas encore libéré la chambre malgré la
+// date de départ prévue aujourd'hui : on garde une trace (sans rien changer d'autre)
+// pour qu'il puisse suivre la situation, sans forcer un check-out qui n'a pas eu lieu.
+function signalerDepartRetarde(idSejour){
+  const s = DB.sejours.find(x=>x.idSejour===idSejour);
+  if(!s) return {ok:false, error:"Séjour introuvable."};
+  s.presenceSignalee = true;
+  s.dateSignalement = todayStr();
+  save();
+  return {ok:true, sejour:s};
+}
+
+// Client attendu qui ne s'est pas présenté : la réservation passe à "No-show" et la
+// chambre redevient immédiatement disponible (comme une annulation), sans créer de
+// séjour ni de facture.
+function markNoShow(id){
+  const r = DB.reservations.find(x=>x.id===id);
+  if(!r) return {ok:false, error:"Réservation introuvable."};
+  if(r.statut!=="Confirmée") return {ok:false, error:"Cette réservation n'est pas confirmée (statut : "+r.statut+")."};
+  r.statut = "No-show";
   save();
   return {ok:true, reservation:r};
 }

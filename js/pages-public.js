@@ -453,12 +453,16 @@ function wireReserver(rawSession){
       if(!valid){ toast("Formulaire incomplet","Veuillez renseigner tous les champs.", true); return; }
 
       btn.innerHTML = `<span class="loader"></span> Traitement...`; btn.disabled = true;
-      setTimeout(()=>{
+      setTimeout(async ()=>{
         // Met à jour les coordonnées du compte du client déjà identifié (pas de nouveau compte anonyme)
         const client = DB.clients.find(c=>c.idClient===currentSession.idClient);
         client.nom = nom.value.trim(); client.prenom = prenom.value.trim(); client.telephone = tel.value.trim();
         save();
-        const result = createReservation({idClient:client.idClient, numeroChambre:RES_STATE.numeroChambre, dateArrivee:RES_STATE.dateArrivee, dateDepart:RES_STATE.dateDepart, nbPersonnes:RES_STATE.nbPersonnes});
+        // On attend la réponse réelle du serveur partagé avant d'afficher un succès :
+        // createReservation vérifie désormais directement auprès de Supabase (voir
+        // js/data.js) pour ne jamais confirmer côté client une réservation que le
+        // serveur aurait en réalité refusée à cause d'un conflit avec un autre appareil.
+        const result = await createReservation({idClient:client.idClient, numeroChambre:RES_STATE.numeroChambre, dateArrivee:RES_STATE.dateArrivee, dateDepart:RES_STATE.dateDepart, nbPersonnes:RES_STATE.nbPersonnes});
         if(!result.ok){
           toast("Réservation impossible", result.error, true);
           btn.innerHTML = "Confirmer la réservation"; btn.disabled = false;
@@ -572,6 +576,20 @@ function wireMesReservations(session){
   };
 }
 function wireReservationActions(container, refresh){
+  container.querySelectorAll("[data-noshow]").forEach(b=>{
+    b.onclick = ()=>{
+      openModal(`<h3>Client absent (No-show)</h3><p style="font-size:13.5px;color:var(--text-soft);">Confirmez-vous que le client ne s'est pas présenté pour la réservation <b>${b.dataset.noshow}</b> ? Elle passera au statut "No-show" et la chambre sera immédiatement libérée pour ces dates.</p>
+      <div class="modal-actions"><button class="btn btn-outline btn-sm" id="modal-noshow-no">Retour</button><button class="btn btn-danger btn-sm" id="modal-noshow-yes">Confirmer l'absence</button></div>`);
+      document.getElementById("modal-noshow-no").onclick = closeModal;
+      document.getElementById("modal-noshow-yes").onclick = ()=>{
+        const r = markNoShow(b.dataset.noshow);
+        closeModal();
+        if(!r.ok){ toast("Action impossible", r.error, true); return; }
+        toast("Client marqué absent","La chambre est de nouveau disponible.");
+        refresh();
+      };
+    };
+  });
   container.querySelectorAll("[data-cancel]").forEach(b=>{
     b.onclick = ()=>{
       openModal(`<h3>Annuler la réservation</h3><p style="font-size:13.5px;color:var(--text-soft);">Confirmez-vous l'annulation de la réservation <b>${b.dataset.cancel}</b> ? La chambre sera libérée pour ces dates.</p>

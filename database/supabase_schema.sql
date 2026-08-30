@@ -61,7 +61,7 @@ create table reservations (
     "nbPersonnes"   integer not null check ("nbPersonnes" > 0),
     montant         real not null check (montant >= 0),
     statut          text not null default 'Confirmée'
-                    check (statut in ('Confirmée','Annulée','Terminée')),
+                    check (statut in ('Confirmée','Annulée','Terminée','No-show')),
     "dateCreation"  text not null,
     check ("dateDepart" > "dateArrivee")
 );
@@ -110,7 +110,9 @@ create table sejours (
     "dateDepartReelle"  text,
     "montantTotal"      real not null check ("montantTotal" >= 0),
     statut              text not null default 'En cours'
-                        check (statut in ('En cours','Terminé'))
+                        check (statut in ('En cours','Terminé')),
+    "presenceSignalee"  boolean not null default false,
+    "dateSignalement"   text
 );
 create index idx_sejours_client  on sejours("idClient");
 create index idx_sejours_chambre on sejours("numeroChambre");
