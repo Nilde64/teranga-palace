@@ -92,8 +92,14 @@ async function pushDBToSupabase(db){
    à partir du maximum réellement présent côté Supabase, pour limiter le risque de collision
    d'identifiants entre deux navigateurs différents créant des entrées en parallèle. */
 function recomputeCounters(){
+  // Ne prend que les chiffres en fin d'identifiant (le vrai numéro de séquence),
+  // jamais tous les chiffres du texte : un ID comme "TP-2026-00111" contient déjà
+  // "2026" dans son préfixe, donc un simple retrait de tout ce qui n'est pas un
+  // chiffre fusionnerait "2026" et "00111" en un grand nombre absurde (202600111),
+  // qui grossirait ensuite indéfiniment à chaque resynchronisation.
   const maxNum = (rows, idField) => rows.reduce((m,r)=>{
-    const n = parseInt(String(r[idField]||"").replace(/[^0-9]/g,""),10);
+    const match = String(r[idField]||"").match(/(\d+)$/);
+    const n = match ? parseInt(match[1],10) : NaN;
     return isNaN(n) ? m : Math.max(m, n);
   }, 0);
   DB.counters.client      = Math.max(DB.counters.client||1, maxNum(DB.clients,"idClient")+1);
@@ -539,7 +545,13 @@ function overlap(aStart,aEnd,bStart,bEnd){ return aStart < bEnd && bStart < aEnd
 
 function isRoomAvailable(numeroChambre, dateArrivee, dateDepart, excludeReservationId){
   const chambre = DB.chambres.find(c=>c.numeroChambre===numeroChambre);
-  if(!chambre || chambre.statut==="Maintenance") return false;
+  // Une chambre en Maintenance ou physiquement Occupée (client actuellement en
+  // séjour, après check-in) ne peut recevoir aucune nouvelle réservation, quelles
+  // que soient les dates demandées : on ne connaît pas avec certitude la date de
+  // départ réelle du client présent (elle peut différer de la date initialement
+  // prévue), donc on bloque par précaution jusqu'au check-out effectif (qui remet
+  // la chambre à "Disponible").
+  if(!chambre || chambre.statut==="Maintenance" || chambre.statut==="Occupée") return false;
   const a1 = new Date(dateArrivee), a2 = new Date(dateDepart);
   const clash = DB.reservations.some(r=>{
     if(r.numeroChambre!==numeroChambre) return false;
