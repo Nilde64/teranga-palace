@@ -16,6 +16,15 @@
   --shadow:0 18px 40px -20px rgba(11,27,46,.35);
   --serif:'Cormorant Garamond', serif;
   --sans:'Jost', sans-serif;
+  /* --- Palette étendue (redesign premium — pages publiques) --- */
+  --or-fonce:#a97d3c;
+  --lavande:#8f82ad;
+  --lavande-clair:#c9c0dd;
+  --lavande-pale:#f3f1f8;
+  --lavande-fonce:#453b5c;
+  --shadow-xl:0 50px 100px -32px rgba(11,27,46,.5);
+  --shadow-gold:0 14px 34px -12px rgba(201,161,90,.5);
+  --shadow-lavande:0 14px 34px -12px rgba(143,130,173,.45);
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden;}
@@ -206,13 +215,53 @@ table tr:hover td{background:rgba(201,161,90,.04);}
 .pass-toggle svg{width:17px;height:17px;}
 
 /* room cards */
-.room-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
-.room-card{background:var(--white);border:1px solid rgba(11,27,46,.08);overflow:hidden;transition:box-shadow .2s;}
-.room-card:hover{box-shadow:var(--shadow);}
-.room-visual{height:150px;position:relative;overflow:hidden;}
-.room-body{padding:20px 22px 22px;}
-.room-body .type{font-family:var(--serif);font-size:22px;}
-.room-meta{display:flex;gap:14px;margin:10px 0 12px;font-size:12px;color:var(--text-soft);}
+.room-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;}
+.room-card{
+  background:var(--white);
+  border:1px solid rgba(11,27,46,.06);
+  border-radius:18px;
+  overflow:hidden;
+  transition:transform .45s cubic-bezier(.22,.61,.36,1), box-shadow .45s cubic-bezier(.22,.61,.36,1);
+  box-shadow:0 10px 28px -20px rgba(11,27,46,.35);
+}
+.room-card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 34px 60px -26px rgba(11,27,46,.4);
+}
+.room-visual{height:220px;position:relative;overflow:hidden;}
+.room-visual img{transition:transform .8s cubic-bezier(.22,.61,.36,1);}
+.room-card:hover .room-visual img{transform:scale(1.09);}
+.room-price-badge{
+  position:absolute;top:14px;right:14px;
+  background:rgba(250,246,236,.96);
+  color:var(--bleu-nuit);
+  font-family:var(--serif);font-weight:600;font-size:15px;
+  padding:6px 14px;border-radius:999px;
+  box-shadow:0 10px 24px -10px rgba(11,27,46,.5);
+  backdrop-filter:blur(2px);
+}
+.room-price-badge span{font-family:var(--sans);font-size:10px;color:var(--text-soft);font-weight:500;margin-left:2px;}
+.room-body{padding:24px 24px 26px;}
+.room-body .type{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--bleu-nuit);letter-spacing:.01em;}
+.room-meta{display:flex;gap:14px;margin:8px 0 12px;font-size:12px;color:var(--text-soft);}
+.room-amenities{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 2px;}
+.amenity-chip{
+  display:inline-flex;align-items:center;
+  padding:4px 11px;border-radius:999px;
+  background:rgba(201,161,90,.10);
+  border:1px solid rgba(201,161,90,.28);
+  color:var(--bleu-nuit-3);
+  font-family:var(--sans);font-size:10.5px;letter-spacing:.03em;font-weight:500;
+}
+.room-footer{margin-top:18px;padding-top:16px;border-top:1px solid rgba(11,27,46,.07);}
+.room-card .btn-outline{
+  border-radius:999px;
+  text-align:center;
+  padding:10px 20px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+  transition:background .3s ease,color .3s ease,border-color .3s ease;
+}
+.room-card .btn-outline:hover{background:var(--or);color:var(--bleu-nuit);border-color:var(--or);}
 .room-price{font-family:var(--serif);font-size:22px;color:var(--bleu-nuit);}
 .room-price span{font-size:12px;color:var(--text-soft);font-family:var(--sans);}
 
@@ -344,4 +393,727 @@ table tr:hover td{background:rgba(201,161,90,.04);}
   .footer-inner{grid-template-columns:1fr;gap:22px;font-size:11.5px;}
   .footer h5{font-size:10.5px;margin-bottom:8px;}
   .footer a{font-size:11.5px;margin-bottom:7px;}
+}
+
+/* ======================= ÉCRAN DE BIENVENUE (AJOUT) ======================= */
+#welcome-screen{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 30%, var(--bleu-nuit-3) 0%, var(--bleu-nuit) 70%);
+  animation:welcomeFadeOut .9s ease forwards;
+  animation-delay:2.6s;
+}
+#welcome-screen.no-anim{animation:none;}
+#welcome-screen .welcome-inner{
+  text-align:center;padding:0 24px;
+}
+#welcome-screen .welcome-eyebrow{
+  font-family:var(--sans);text-transform:uppercase;letter-spacing:.5em;
+  font-size:12px;font-weight:500;color:var(--or-clair);
+  margin:0 0 18px;
+  opacity:0;filter:blur(8px);
+  animation:welcomeFadeBlurIn 1.1s ease forwards;
+  animation-delay:.15s;
+}
+#welcome-screen .welcome-title{
+  font-family:var(--serif);font-weight:600;color:var(--ivoire);
+  font-size:clamp(40px,7vw,80px);letter-spacing:.02em;line-height:1.05;
+  margin:0 0 20px;
+  opacity:0;filter:blur(14px);
+  animation:welcomeFadeBlurIn 1.3s ease forwards;
+  animation-delay:.5s;
+}
+#welcome-screen .welcome-sub{
+  font-family:var(--sans);text-transform:uppercase;letter-spacing:.32em;
+  font-size:11px;font-weight:500;color:var(--sable);
+  opacity:0;filter:blur(8px);
+  animation:welcomeFadeBlurIn 1.1s ease forwards;
+  animation-delay:1.05s;
+}
+#welcome-screen .welcome-rule{
+  width:46px;height:1px;background:var(--or);
+  margin:22px auto;
+  opacity:0;
+  animation:welcomeRuleIn 1s ease forwards;
+  animation-delay:.85s;
+}
+@keyframes welcomeFadeBlurIn{
+  from{opacity:0;filter:blur(14px);transform:translateY(8px);}
+  to{opacity:1;filter:blur(0);transform:translateY(0);}
+}
+@keyframes welcomeRuleIn{
+  from{opacity:0;transform:scaleX(0);}
+  to{opacity:1;transform:scaleX(1);}
+}
+@keyframes welcomeFadeOut{
+  from{opacity:1;visibility:visible;}
+  to{opacity:0;visibility:hidden;pointer-events:none;}
+}
+@media (max-width:480px){
+  #welcome-screen .welcome-eyebrow{letter-spacing:.35em;font-size:11px;}
+  #welcome-screen .welcome-sub{letter-spacing:.22em;font-size:10px;}
+}
+
+
+/* ==========================================================================
+   REDESIGN PREMIUM — PAGES PUBLIQUES
+   (Réserver · Mes réservations · À propos · Contact · Connexion)
+
+   Principe : ces 5 pages sont repérées sans toucher au HTML ni au JS, grâce
+   à des sélecteurs CSS :has() ciblant un identifiant unique déjà présent
+   dans chacune d'elles (#stepper, #my-res-list, #lookup-id, #ct-nom,
+   #lg-email) ou la classe .grid-2 (À propos / Contact). Rien n'est modifié
+   sur l'Accueil, les Chambres, l'espace Administration (#admin-content, un
+   conteneur totalement différent) ni les fenêtres modales (#modal-root).
+   100% CSS — aucun texte, contenu, champ, bouton, lien ni fonctionnalité
+   n'est modifié ou supprimé.
+   ========================================================================== */
+
+#main-content .section:has(#stepper),
+#main-content .section:has(#my-res-list),
+#main-content .section:has(#lookup-id),
+#main-content .section:has(.grid-2):not(:has(#ct-nom)),
+#main-content .section:has(#ct-nom),
+#main-content .section:has(#lg-email){
+  padding-top:0;
+  padding-bottom:130px;
+  position:relative;
+}
+
+/* -------------------------------------------------------------------------
+   1. BANDEAU ÉDITORIAL — plein écran, sombre, avec monogramme filigrane
+   ------------------------------------------------------------------------- */
+#main-content .section:has(#stepper) > .section-head,
+#main-content .section:has(#my-res-list) > .section-head,
+#main-content .section:has(#lookup-id) > .section-head,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head,
+#main-content .section:has(#ct-nom) > .section-head,
+#main-content .section:has(#lg-email) > .section-head{
+  position:relative;
+  z-index:1;
+  width:100vw;
+  max-width:100vw;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  padding:104px 28px 92px;
+  text-align:center;
+  overflow:hidden;
+}
+#main-content .section:has(#stepper) > .section-head::before,
+#main-content .section:has(#my-res-list) > .section-head::before,
+#main-content .section:has(#lookup-id) > .section-head::before,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head::before,
+#main-content .section:has(#ct-nom) > .section-head::before,
+#main-content .section:has(#lg-email) > .section-head::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  background:var(--bleu-nuit); /* couleur unique, identique au header (.topbar) */
+}
+/* filet de lumière très fin en pied de bandeau */
+#main-content .section:has(#stepper) > .section-head::after,
+#main-content .section:has(#my-res-list) > .section-head::after,
+#main-content .section:has(#lookup-id) > .section-head::after,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head::after,
+#main-content .section:has(#ct-nom) > .section-head::after,
+#main-content .section:has(#lg-email) > .section-head::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;height:1px;
+  z-index:-1;
+  background:linear-gradient(90deg,transparent,rgba(201,161,90,.55) 24%,rgba(143,130,173,.5) 50%,rgba(201,161,90,.55) 76%,transparent);
+}
+/* monogramme filigrane "TP" en fond de bandeau — centré et contenu dans le
+   bandeau (le section-head passe en overflow:hidden ci-dessus, donc plus
+   aucun débordement visuel possible vers le contenu situé en dessous) */
+#main-content .section:has(#stepper) .section-head h2,
+#main-content .section:has(#my-res-list) .section-head h2,
+#main-content .section:has(#lookup-id) .section-head h2,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .section-head h2,
+#main-content .section:has(#ct-nom) .section-head h2,
+#main-content .section:has(#lg-email) .section-head h2{
+  position:relative;
+}
+#main-content .section:has(#stepper) .section-head h2::before,
+#main-content .section:has(#my-res-list) .section-head h2::before,
+#main-content .section:has(#lookup-id) .section-head h2::before,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .section-head h2::before,
+#main-content .section:has(#ct-nom) .section-head h2::before,
+#main-content .section:has(#lg-email) .section-head h2::before{
+  content:"TP";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:var(--serif);
+  font-size:150px;
+  line-height:1;
+  font-weight:600;
+  letter-spacing:.02em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(250,246,236,.09);
+  z-index:-1;
+  white-space:nowrap;
+  pointer-events:none;
+  user-select:none;
+}
+#main-content .section:has(#stepper) > .section-head .eyebrow,
+#main-content .section:has(#my-res-list) > .section-head .eyebrow,
+#main-content .section:has(#lookup-id) > .section-head .eyebrow,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head .eyebrow,
+#main-content .section:has(#ct-nom) > .section-head .eyebrow,
+#main-content .section:has(#lg-email) > .section-head .eyebrow{
+  color:var(--or-clair);
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:14px;
+}
+#main-content .section:has(#stepper) > .section-head .eyebrow::before,
+#main-content .section:has(#my-res-list) > .section-head .eyebrow::before,
+#main-content .section:has(#lookup-id) > .section-head .eyebrow::before,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head .eyebrow::before,
+#main-content .section:has(#ct-nom) > .section-head .eyebrow::before,
+#main-content .section:has(#lg-email) > .section-head .eyebrow::before{
+  content:"";display:block;width:26px;height:1px;background:linear-gradient(90deg,transparent,var(--or));
+}
+#main-content .section:has(#stepper) > .section-head .eyebrow::after,
+#main-content .section:has(#my-res-list) > .section-head .eyebrow::after,
+#main-content .section:has(#lookup-id) > .section-head .eyebrow::after,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head .eyebrow::after,
+#main-content .section:has(#ct-nom) > .section-head .eyebrow::after,
+#main-content .section:has(#lg-email) > .section-head .eyebrow::after{
+  content:"";display:block;width:26px;height:1px;background:linear-gradient(90deg,var(--or),transparent);
+}
+#main-content .section:has(#stepper) > .section-head h2,
+#main-content .section:has(#my-res-list) > .section-head h2,
+#main-content .section:has(#lookup-id) > .section-head h2,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head h2,
+#main-content .section:has(#ct-nom) > .section-head h2,
+#main-content .section:has(#lg-email) > .section-head h2{
+  color:var(--ivoire) !important;
+  font-size:clamp(34px,4.4vw,52px);
+  font-weight:500;
+  margin-top:22px;
+  letter-spacing:.008em;
+}
+#main-content .section:has(#stepper) > .section-head p,
+#main-content .section:has(#my-res-list) > .section-head p,
+#main-content .section:has(#lookup-id) > .section-head p,
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head p,
+#main-content .section:has(#ct-nom) > .section-head p,
+#main-content .section:has(#lg-email) > .section-head p{
+  color:rgba(250,246,236,.68) !important;
+  max-width:520px;
+  margin-left:auto;
+  margin-right:auto;
+  font-size:15px;
+  line-height:1.85;
+}
+
+/* Seul le stepper de réservation flotte à cheval sur le bandeau (barre fine
+   et arrondie, l'effet de survol fonctionne bien sur cette forme). Pour les
+   autres pages, la carte est nettement détachée du bandeau, avec un espace
+   confortable et net — pas de chevauchement. */
+#main-content .section:has(#stepper) > .section-head + *{
+  position:relative;
+  z-index:2;
+  margin-top:-52px;
+}
+#main-content .section:has(#my-res-list) > .section-head + *,
+#main-content .section:has(#lookup-id) > .section-head + *,
+#main-content .section:has(#lg-email) > .section-head + *{
+  position:relative;
+  z-index:2;
+  margin-top:56px;
+}
+/* La carte de réservation (après le stepper flottant) est bien centrée */
+#main-content .section:has(#stepper) > .panel{
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* -------------------------------------------------------------------------
+   2. STEPPER — timeline flottante en verre dépoli, ligne de progression
+   ------------------------------------------------------------------------- */
+#main-content .section:has(#stepper) > .stepper{
+  background:rgba(255,255,255,.88);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);
+  backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:999px;
+  padding:18px 34px;
+  box-shadow:var(--shadow-xl);
+  justify-content:center;
+  max-width:900px;
+  margin-left:auto;margin-right:auto;
+}
+#main-content .stepper .step{gap:11px;transition:color .3s ease;}
+#main-content .stepper .step .num{
+  font-family:var(--serif);font-size:13px;font-weight:600;
+  transition:all .4s cubic-bezier(.22,.61,.36,1);
+}
+#main-content .stepper .step.active .num{
+  background:var(--or);border-color:var(--or);color:var(--bleu-nuit);
+  box-shadow:0 0 0 5px rgba(201,161,90,.18), 0 8px 18px -6px rgba(201,161,90,.6);
+}
+#main-content .stepper .step.done .num{
+  background:var(--lavande-fonce);border-color:var(--lavande-fonce);color:var(--ivoire);
+  box-shadow:0 6px 14px -6px rgba(69,59,92,.45);
+}
+#main-content .stepper .step-sep{width:34px;height:1px;background:rgba(11,27,46,.14);transition:background .4s ease;}
+#main-content .stepper .step.done + .step-sep{background:linear-gradient(90deg,var(--lavande-fonce),var(--or));}
+@media (max-width:640px){
+  #main-content .section:has(#stepper) > .stepper{border-radius:22px;padding:16px 16px;gap:4px 0;}
+  #main-content .stepper{row-gap:10px;}
+}
+
+/* -------------------------------------------------------------------------
+   3. CARTES / PANELS — bordure fine, ombre légère, liseré or→lavande
+   ------------------------------------------------------------------------- */
+#main-content .panel{
+  position:relative;
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(11,27,46,.07);
+  background:var(--white);
+  box-shadow:0 2px 3px rgba(11,27,46,.03), 0 24px 54px -30px rgba(11,27,46,.35);
+  padding:38px 40px;
+  transition:box-shadow .45s cubic-bezier(.22,.61,.36,1), transform .45s cubic-bezier(.22,.61,.36,1), border-color .45s ease;
+  animation:panelRise .6s cubic-bezier(.22,.61,.36,1) both;
+}
+#main-content .panel::before{
+  content:"";
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg, var(--or) 0%, var(--lavande) 50%, var(--or) 100%);
+  opacity:.85;
+}
+#main-content .panel::after{
+  content:"";
+  position:absolute;top:18px;right:18px;width:26px;height:26px;
+  border-top:1px solid rgba(201,161,90,.35);
+  border-right:1px solid rgba(201,161,90,.35);
+  opacity:0;
+  transition:opacity .4s ease, transform .4s ease;
+  transform:translate(-4px,4px);
+  pointer-events:none;
+}
+#main-content .panel:hover{
+  box-shadow:0 2px 3px rgba(11,27,46,.03), 0 40px 70px -30px rgba(11,27,46,.4);
+  transform:translateY(-4px);
+  border-color:rgba(201,161,90,.22);
+}
+#main-content .panel:hover::after{opacity:1;transform:translate(0,0);}
+#main-content .panel:has(.row-actions):hover{transform:translateY(-7px);}
+
+/* accent latéral selon le statut (Mes réservations) */
+#main-content .panel:has(.badge-green){border-left:3px solid var(--vert);}
+#main-content .panel:has(.badge-red){border-left:3px solid var(--rouge);}
+#main-content .panel:has(.badge-blue){border-left:3px solid var(--lavande-fonce);}
+#main-content .panel .row-actions{
+  margin-top:22px;padding-top:20px;border-top:1px dashed rgba(11,27,46,.12);
+}
+@keyframes panelRise{
+  from{opacity:0;transform:translateY(18px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* -------------------------------------------------------------------------
+   4. CHAMPS DE FORMULAIRE — style "trait" épuré, glow doux au focus
+   ------------------------------------------------------------------------- */
+#main-content .field{margin-bottom:22px;gap:9px;}
+#main-content .field label{
+  font-size:10px;letter-spacing:.16em;font-weight:600;color:var(--lavande-fonce);
+  text-transform:uppercase;
+}
+#main-content .field input,
+#main-content .field select,
+#main-content .field textarea{
+  padding:13px 4px;
+  border:none;
+  border-bottom:1px solid rgba(11,27,46,.18);
+  border-radius:0;
+  background:transparent;
+  font-size:15px;
+  font-family:var(--sans);
+  color:var(--text);
+  transition:border-color .3s ease, box-shadow .3s ease, background .3s ease;
+}
+#main-content .field select{
+  padding-top:13px;padding-bottom:12px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-soft) 50%),linear-gradient(135deg,var(--text-soft) 50%,transparent 50%);
+  background-position:calc(100% - 10px) 22px, calc(100% - 4px) 22px;
+  background-size:6px 6px,6px 6px;
+  background-repeat:no-repeat;
+  appearance:none;-webkit-appearance:none;
+}
+#main-content .field input:hover,
+#main-content .field select:hover,
+#main-content .field textarea:hover{border-color:rgba(143,130,173,.6);}
+#main-content .field input:focus,
+#main-content .field select:focus,
+#main-content .field textarea:focus{
+  outline:none;
+  border-color:var(--or);
+  box-shadow:0 1px 0 0 var(--or);
+}
+#main-content .field textarea{border:1px solid rgba(11,27,46,.16);border-radius:12px;padding:14px 16px;resize:vertical;}
+#main-content .field textarea:focus{box-shadow:0 0 0 4px rgba(201,161,90,.14);}
+#main-content .field.invalid input,
+#main-content .field.invalid select{
+  border-color:var(--rouge);
+  box-shadow:0 1px 0 0 var(--rouge);
+}
+#main-content .field .err{font-size:11px;margin-top:2px;}
+#main-content .field input[readonly]{
+  color:var(--text-soft) !important;
+  background:linear-gradient(0deg, rgba(11,27,46,.03), rgba(11,27,46,.03)) !important;
+  border-bottom-style:dashed !important;
+  cursor:not-allowed;
+}
+#main-content .field-pass-wrap input{padding-right:38px !important;}
+#main-content .field-note{font-size:11px;letter-spacing:.02em;}
+
+/* -------------------------------------------------------------------------
+   5. BOUTONS — pilule, majuscules espacées, brillance balayée au survol
+   ------------------------------------------------------------------------- */
+#main-content .panel .btn,
+#main-content .section:has(#stepper) > .panel ~ .btn{
+  border-radius:999px;
+  padding:14px 30px;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:600;
+  transition:transform .35s cubic-bezier(.22,.61,.36,1), box-shadow .35s ease, background-position .7s ease, color .3s ease, border-color .3s ease;
+}
+#main-content .panel .btn-sm{padding:10px 22px;font-size:10px;}
+#main-content .panel .btn-gold{
+  background-image:linear-gradient(120deg, var(--or) 0%, var(--or) 42%, var(--or-clair) 50%, var(--or) 58%, var(--or) 100%);
+  background-size:240% 100%;
+  background-position:100% 0;
+  border:1px solid transparent;
+}
+#main-content .panel .btn-gold:hover{
+  background-position:0 0;
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-gold);
+}
+#main-content .panel .btn-outline{border-width:1px;}
+#main-content .panel .btn-outline:hover{
+  background:var(--lavande-fonce);color:var(--ivoire);border-color:var(--lavande-fonce);
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-lavande);
+}
+#main-content .panel .btn-dark:hover{transform:translateY(-2px);box-shadow:0 14px 28px -12px rgba(11,27,46,.5);}
+#main-content .panel .btn-danger:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 26px -12px rgba(165,69,63,.45);
+}
+#main-content .panel .btn:active{transform:translateY(0);}
+
+/* -------------------------------------------------------------------------
+   6. RÉSUMÉ DE PRIX (étape 4 réservation)
+   ------------------------------------------------------------------------- */
+#price-summary{
+  border-radius:16px !important;
+  background:linear-gradient(155deg, var(--lavande-pale) 0%, var(--ivoire) 100%) !important;
+  border:1px solid rgba(143,130,173,.25) !important;
+  border-left:3px solid var(--or) !important;
+  box-shadow:0 14px 34px -22px rgba(11,27,46,.3) !important;
+}
+
+/* -------------------------------------------------------------------------
+   7. BADGES DE STATUT
+   ------------------------------------------------------------------------- */
+#main-content .panel .badge{padding:6px 14px;font-weight:600;letter-spacing:.05em;}
+
+/* -------------------------------------------------------------------------
+   8. À PROPOS — mise en page éditoriale asymétrique, lettrine, liste de stats
+   ------------------------------------------------------------------------- */
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2{
+  grid-template-columns:1.2fr .8fr;
+  gap:72px;
+  align-items:start;
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:first-child{
+  position:relative;
+  padding-left:34px;
+  border-left:1px solid rgba(201,161,90,.3);
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:first-child p:first-of-type::first-letter{
+  font-family:var(--serif);
+  font-size:64px;
+  font-weight:600;
+  color:var(--or);
+  float:left;
+  line-height:.78;
+  padding:6px 10px 0 0;
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:first-child h4{
+  position:relative;padding-left:24px;
+  font-weight:500;
+  color:var(--bleu-nuit);
+  letter-spacing:.01em;
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:first-child h4::before{
+  content:"";position:absolute;left:0;top:11px;width:15px;height:2px;
+  background:linear-gradient(90deg,var(--or),var(--lavande));
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:last-child{
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid rgba(11,27,46,.07);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 20px 50px -30px rgba(11,27,46,.35);
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:last-child > .panel{
+  border-radius:0;
+  border:none;
+  box-shadow:none;
+  padding:26px 28px;
+  border-bottom:1px solid rgba(11,27,46,.07);
+  animation:none;
+  gap:20px;
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:last-child > .panel::before{display:none;}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:last-child > .panel:last-child{border-bottom:none;}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:last-child > .panel:hover{
+  transform:none;
+  background:var(--lavande-pale);
+}
+#main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:last-child > .panel > div:first-child{
+  font-weight:600;
+  min-width:64px;
+}
+
+/* -------------------------------------------------------------------------
+   9. CONTACT — formulaire épuré + carte de coordonnées nocturne
+   ------------------------------------------------------------------------- */
+#main-content .section:has(#ct-nom) .grid-2{
+  grid-template-columns:1.1fr .9fr;
+  gap:60px;
+  align-items:stretch;
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:first-child.panel{
+  display:flex;flex-direction:column;justify-content:center;
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2){
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(165deg, var(--bleu-nuit-3) 0%, var(--bleu-nuit) 70%, #081524 100%);
+  color:var(--ivoire);
+  border-radius:20px;
+  padding:44px 38px;
+  box-shadow:0 26px 60px -30px rgba(11,27,46,.55);
+  display:flex;flex-direction:column;justify-content:center;
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2)::before{
+  content:"";
+  position:absolute;top:-40%;right:-30%;width:70%;height:70%;
+  background:radial-gradient(circle, rgba(143,130,173,.32) 0%, transparent 68%);
+  pointer-events:none;
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2)::after{
+  content:"";
+  position:absolute;bottom:-30%;left:-20%;width:60%;height:60%;
+  background:radial-gradient(circle, rgba(201,161,90,.18) 0%, transparent 70%);
+  pointer-events:none;
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2) h4{
+  color:var(--or-clair);
+  font-weight:500;
+  position:relative;
+  padding-bottom:12px;
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2) h4::after{
+  content:"";position:absolute;left:0;bottom:0;width:32px;height:1px;background:var(--or);
+}
+#main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2) p{
+  color:rgba(250,246,236,.75);
+  position:relative;
+  letter-spacing:.01em;
+}
+
+/* -------------------------------------------------------------------------
+   10. CONNEXION — boutique card centrée, sceau monogramme
+   ------------------------------------------------------------------------- */
+#main-content .section:has(#lg-email){
+  max-width:none !important;
+}
+#main-content .section:has(#lg-email) > .panel{
+  max-width:460px;
+  margin:0 auto;
+  padding:48px 42px 42px;
+  text-align:center;
+}
+#main-content .section:has(#lg-email) > .panel .field{text-align:left;}
+#main-content .section:has(#lg-email) > .panel #btn-login{margin-top:4px;}
+#main-content .section:has(#lg-email) > .panel p:last-child{
+  border-top:1px solid rgba(11,27,46,.08);
+  padding-top:18px;margin-top:22px !important;
+}
+
+/* -------------------------------------------------------------------------
+   11. MES RÉSERVATIONS — recherche invitée : séparateur "ou" élégant
+   ------------------------------------------------------------------------- */
+#main-content .section:has(#lookup-id) > .panel{
+  max-width:520px;margin:0 auto;padding:44px 40px;
+}
+#main-content .section:has(#lookup-id) > .panel p:last-child{
+  display:flex;align-items:center;gap:14px;
+  text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--text-soft);
+}
+#main-content .section:has(#lookup-id) > .panel p:last-child::before,
+#main-content .section:has(#lookup-id) > .panel p:last-child::after{
+  content:"";flex:1;height:1px;background:rgba(11,27,46,.12);
+}
+
+/* -------------------------------------------------------------------------
+   12. RESPONSIVE
+   ------------------------------------------------------------------------- */
+@media (max-width:820px){
+  #main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2,
+  #main-content .section:has(#ct-nom) .grid-2{
+    grid-template-columns:1fr;
+  }
+  #main-content .section:has(.grid-2):not(:has(#ct-nom)) .grid-2 > div:first-child{
+    padding-left:22px;
+  }
+  #main-content .section:has(#ct-nom) .grid-2 > div:nth-child(2){padding:36px 30px;}
+}
+@media (max-width:720px){
+  #main-content .panel{padding:30px 24px;border-radius:18px;}
+  #main-content .section:has(#lg-email) > .panel,
+  #main-content .section:has(#lookup-id) > .panel{padding:40px 26px;}
+  #main-content .section:has(#stepper) > .section-head,
+  #main-content .section:has(#my-res-list) > .section-head,
+  #main-content .section:has(#lookup-id) > .section-head,
+  #main-content .section:has(.grid-2):not(:has(#ct-nom)) > .section-head,
+  #main-content .section:has(#ct-nom) > .section-head,
+  #main-content .section:has(#lg-email) > .section-head{
+    padding:72px 22px 60px;
+  }
+  #main-content .section:has(#stepper) .section-head h2::before,
+  #main-content .section:has(#my-res-list) .section-head h2::before,
+  #main-content .section:has(#lookup-id) .section-head h2::before,
+  #main-content .section:has(.grid-2):not(:has(#ct-nom)) .section-head h2::before,
+  #main-content .section:has(#ct-nom) .section-head h2::before,
+  #main-content .section:has(#lg-email) .section-head h2::before{
+    font-size:120px;
+  }
+}
+@media (max-width:480px){
+  #main-content .panel{padding:26px 20px;}
+}
+
+/* ==========================================================================
+   PAGE "CHAMBRES" (Hébergement — Nos chambres & suites)
+   Même traitement éditorial que les 5 pages ci-dessus, appliqué uniquement
+   à cette page grâce à #rooms-grid (id unique, absent du reste du site).
+   Le bandeau ci-dessous est repéré via :has(+ .section:has(#rooms-grid)),
+   c'est-à-dire "la section immédiatement suivie de la grille de chambres" —
+   ceci n'affecte donc jamais la bannière de la page d'accueil (qui utilise
+   la même classe .section-tight mais n'est jamais suivie de #rooms-grid).
+   100% CSS — aucun texte, contenu, champ, bouton, lien ni fonctionnalité
+   n'est modifié ou supprimé.
+   ========================================================================== */
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)){
+  position:relative;
+  overflow:hidden;
+  padding:100px 0 108px !important;
+  background:var(--bleu-nuit) !important; /* couleur unique, identique au header (.topbar) */
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid))::after{
+  content:"";
+  position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(201,161,90,.55) 24%,rgba(143,130,173,.5) 50%,rgba(201,161,90,.55) 76%,transparent);
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) > .section{
+  position:relative;
+  padding:0 28px !important;
+  text-align:center;
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) > .section::before{
+  content:"TP";
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:var(--serif);
+  font-size:150px;
+  line-height:1;
+  font-weight:600;
+  letter-spacing:.02em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(250,246,236,.09);
+  z-index:0;
+  white-space:nowrap;
+  pointer-events:none;
+  user-select:none;
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) .eyebrow{
+  color:var(--or-clair);
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:14px;
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) .eyebrow::before{
+  content:"";display:inline-block;width:26px;height:1px;background:linear-gradient(90deg,transparent,var(--or));
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) .eyebrow::after{
+  content:"";display:inline-block;width:26px;height:1px;background:linear-gradient(90deg,var(--or),transparent);
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) h2{
+  position:relative;
+  color:var(--ivoire) !important;
+  font-size:clamp(34px,4.4vw,52px) !important;
+  font-weight:500;
+  margin-top:22px !important;
+  letter-spacing:.008em;
+}
+#main-content section.section-tight:has(+ .section:has(#rooms-grid)) p{
+  position:relative;
+  color:rgba(250,246,236,.68) !important;
+  max-width:520px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  font-size:15px;
+  line-height:1.85;
+}
+
+/* --- Section grille : filtres + cartes, nettement détachées du bandeau --- */
+#main-content .section:has(#rooms-grid){
+  padding-top:64px;
+}
+#main-content .section:has(#rooms-grid) > div:first-child{
+  justify-content:center;
+  margin-bottom:44px !important;
+}
+#main-content .section:has(#rooms-grid) > div:first-child .btn{
+  border-radius:999px;
+  padding:10px 22px;
+  font-size:11.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  transition:transform .3s cubic-bezier(.22,.61,.36,1), box-shadow .3s ease;
+}
+#main-content .section:has(#rooms-grid) > div:first-child .btn-dark{box-shadow:0 10px 22px -10px rgba(11,27,46,.5);}
+#main-content .section:has(#rooms-grid) > div:first-child .btn:hover{transform:translateY(-2px);}
+
+/* --- Cartes de chambres, légèrement plus premium sur cette page --- */
+#main-content .section:has(#rooms-grid) .room-card{
+  border-radius:22px;
+}
+#main-content .section:has(#rooms-grid) .room-card:hover{
+  box-shadow:0 40px 70px -30px rgba(11,27,46,.42);
+}
+#main-content .section:has(#rooms-grid) .amenity-chip{
+  border-color:rgba(143,130,173,.32);
+  background:rgba(143,130,173,.10);
+}
+
+@media (max-width:720px){
+  #main-content section.section-tight:has(+ .section:has(#rooms-grid)){padding:72px 0 60px !important;}
+  #main-content section.section-tight:has(+ .section:has(#rooms-grid)) > .section::before{font-size:110px;}
 }

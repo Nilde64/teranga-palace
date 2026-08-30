@@ -105,6 +105,19 @@ loading="lazy">
 </section>`;
 }
 
+/* Équipements affichés en petits badges sur les cards (purement visuel — la fiche
+   chambre en base ne stocke pas d'équipements, donc on en déduit un jeu cohérent
+   par type de chambre). N'affecte ni les données ni le filtrage/la réservation. */
+function roomAmenities(c){
+  const base = ["Wi-Fi", "Climatisation"];
+  const parType = {
+    "Simple": ["Bureau"],
+    "Double": ["Balcon"],
+    "Suite": ["Jacuzzi", "Terrasse privée"]
+  };
+  return base.concat(parType[c.type] || []);
+}
+
 function roomCard(c){
   const statusBadge = c.statut==="Disponible" ? '<span class="badge badge-solid badge-green">Disponible</span>'
     : c.statut==="Occupée" ? '<span class="badge badge-solid badge-red">Occupée</span>'
@@ -113,7 +126,8 @@ function roomCard(c){
   return `<div class="room-card">
     <div class="room-visual" style="background:var(--bleu-nuit);">
       ${visual}
-      <div style="position:absolute;top:12px;left:12px;">${statusBadge}</div>
+      <div style="position:absolute;top:14px;left:14px;">${statusBadge}</div>
+      <div class="room-price-badge">${fmtMoney(c.prixParNuit)}<span>/ nuit</span></div>
     </div>
     <div class="room-body">
       <div class="type">Chambre ${c.type}</div>
@@ -122,9 +136,9 @@ function roomCard(c){
         <span>N° ${c.numeroChambre}</span>
       </div>
       <p style="font-size:12.5px;color:var(--text-soft);line-height:1.6;min-height:38px;">${c.description}</p>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
-        <div class="room-price">${fmtMoney(c.prixParNuit)} <span>/ nuit</span></div>
-        <a href="#/reserver?chambre=${c.numeroChambre}" class="btn btn-outline btn-sm">Réserver</a>
+      <div class="room-amenities">${roomAmenities(c).map(a=>`<span class="amenity-chip">${a}</span>`).join("")}</div>
+      <div class="room-footer">
+        <a href="#/reserver?chambre=${c.numeroChambre}" class="btn btn-outline btn-sm btn-block">Réserver cette chambre</a>
       </div>
     </div>
   </div>`;
@@ -181,7 +195,7 @@ function pageReserver(rawSession){
   const preselect = routeQuery().chambre || "";
   const prefill = session && session.role==="Client" ? DB.clients.find(c=>c.idClient===session.idClient) : null;
   return `
-  <section class="section" style="padding-top:56px;">
+  <section class="section">
     <div class="section-head"><div class="eyebrow">Réservation</div><h2>Réserver une chambre</h2>
       <p>${session ? "Indiquez vos dates et le nombre de personnes : nous vérifions la disponibilité en temps réel avant toute confirmation." : "Connectez-vous ou créez votre compte pour commencer, puis indiquez vos dates : nous vérifions la disponibilité en temps réel avant toute confirmation."}</p></div>
 
@@ -512,7 +526,7 @@ function wireReserver(rawSession){
 /* ---------------------------- MES RÉSERVATIONS ---------------------------- */
 function pageMesReservations(session){
   return `
-  <section class="section" style="padding-top:56px;">
+  <section class="section">
     <div class="section-head"><div class="eyebrow">Espace client</div><h2>Mes réservations</h2>
       <p>Consultez, modifiez ou annulez vos réservations à tout moment.</p></div>
     ${session && session.role==="Client" ? `<div id="my-res-list"></div>` : `
@@ -624,7 +638,7 @@ function wireReservationActions(container, refresh){
 
 function pageApropos(){
   return `
-  <section class="section" style="padding-top:60px;">
+  <section class="section">
     <div class="section-head"><div class="eyebrow">Notre histoire</div><h2>À propos de Teranga Palace</h2>
       <p>Depuis la Corniche Ouest de Dakar, Teranga Palace réunit l'art de recevoir sénégalais et les standards internationaux de l'hôtellerie de luxe.</p></div>
     <div class="grid-2" style="display:grid;gap:60px;">
@@ -647,7 +661,7 @@ function pageApropos(){
 
 function pageContact(){
   return `
-  <section class="section" style="padding-top:60px;">
+  <section class="section">
     <div class="section-head"><div class="eyebrow">Contact</div><h2>Nous contacter</h2><p>Une question sur votre réservation ou votre séjour ? Notre équipe vous répond rapidement.</p></div>
     <div class="grid-2" style="display:grid;gap:50px;">
       <div class="panel">
@@ -680,9 +694,9 @@ function wireContact(){
 
 /* ---------------------------- CONNEXION ---------------------------- */
 function pageConnexion(session){
-  if(session) return `<section class="section" style="padding-top:60px;text-align:center;"><p>Vous êtes déjà connecté en tant que ${session.email}.</p></section>`;
+  if(session) return `<section class="section" style="text-align:center;"><p>Vous êtes déjà connecté en tant que ${session.email}.</p></section>`;
   return `
-  <section class="section" style="padding-top:60px;max-width:460px;">
+  <section class="section" style="max-width:460px;">
     <div class="section-head"><div class="eyebrow">Espace sécurisé</div><h2>Connexion</h2><p>Accédez à votre espace selon votre rôle.</p></div>
     <div class="panel">
       <div class="field"><label>Email</label><input type="email" id="lg-email"><span class="err">Veuillez saisir un email valide.</span></div>

@@ -9,6 +9,27 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- ======= ÉCRAN DE BIENVENUE (AJOUT — n'affecte aucune autre fonctionnalité) ======= -->
+<div id="welcome-screen">
+  <div class="welcome-inner">
+    <p class="welcome-eyebrow">Bienvenue</p>
+    <h1 class="welcome-title">Teranga Palace</h1>
+    <div class="welcome-rule"></div>
+    <p class="welcome-sub">Une expérience d'exception à Dakar</p>
+  </div>
+</div>
+<script>
+  // Supprime l'écran de bienvenue du DOM une fois l'animation terminée,
+  // pour ne jamais gêner la navigation ou les fonctionnalités du site.
+  window.addEventListener('load', function () {
+    var ws = document.getElementById('welcome-screen');
+    if (!ws) return;
+    setTimeout(function () {
+      ws.remove();
+    }, 3600); // 2.6s d'affichage + 0.9s de fondu de sortie + marge
+  });
+</script>
+
 <div id="app"></div>
 <div id="toast-stack"></div>
 <div id="modal-root"></div>

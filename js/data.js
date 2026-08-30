@@ -72,8 +72,15 @@ async function pushDBToSupabase(db){
           const sane = sanitizeForSupabase(r, jsKey);
           return jsKey==="chambres" ? (({photo, ...rest})=>rest)(sane) : sane;
         });
-        const { error } = await window.sb.from(table).upsert(clean, { onConflict: pk });
-        if(error) console.error("Supabase upsert", table, error);
+        // Envoi ligne par ligne plutôt qu'en un seul lot groupé : si une ligne est
+        // refusée par une contrainte côté serveur (ex: le trigger anti-chevauchement
+        // qui détecte un conflit sur une donnée ancienne), SEULE cette ligne échoue —
+        // au lieu de bloquer la synchronisation de toutes les autres lignes, valides,
+        // de la table à chaque cycle, indéfiniment.
+        for(const row of clean){
+          const { error } = await window.sb.from(table).upsert(row, { onConflict: pk });
+          if(error) console.error("Supabase upsert", table, row[pk], error);
+        }
       }
       const { data: remoteRows, error: selErr } = await window.sb.from(table).select(pk);
       if(!selErr && remoteRows){
@@ -159,11 +166,29 @@ function normalizeRow(row, jsKey){
    tout envoi. Sert de filet de sécurité définitif contre la pollution de clés (ex:
    une ancienne copie de DB.clients en LocalStorage qui contiendrait encore à la fois
    "idclient" et "idClient") : même dans ce cas, seule la bonne colonne est envoyée. */
+// Valeurs de repli pour les colonnes qui doivent toujours être présentes avec une
+// vraie valeur (jamais absentes) : un envoi Supabase mélange souvent, dans le même
+// lot, des lignes qui ont explicitement ce champ et d'autres qui ne l'ont jamais eu
+// (ex: un ancien séjour créé avant l'ajout d'une colonne) — dans ce cas, les lignes
+// sans la clé reçoivent NULL pour cette colonne plutôt que sa valeur par défaut SQL,
+// ce qui casse tout envoi groupé si la colonne est "not null".
+const SB_DEFAULTS = {
+  sejours: { presenceSignalee: false },
+};
+
+/* Ne garde que les colonnes réellement attendues par le schéma Supabase actuel avant
+   tout envoi. Sert de filet de sécurité définitif contre la pollution de clés (ex:
+   une ancienne copie de DB.clients en LocalStorage qui contiendrait encore à la fois
+   "idclient" et "idClient") : même dans ce cas, seule la bonne colonne est envoyée. */
 function sanitizeForSupabase(row, jsKey){
   const expected = SB_EXPECTED_KEYS[jsKey];
   if(!expected) return row;
   const out = {};
-  expected.forEach(k=>{ if(row[k] !== undefined) out[k] = row[k]; });
+  const defaults = SB_DEFAULTS[jsKey] || {};
+  expected.forEach(k=>{
+    if(row[k] !== undefined) out[k] = row[k];
+    else if(k in defaults) out[k] = defaults[k];
+  });
   return out;
 }
 
@@ -714,7 +739,7 @@ function checkinReservation(reservationId){
   if(r.statut!=="Confirmée") return {ok:false, error:"Cette réservation n'est pas confirmée (statut : "+r.statut+")."};
   if(DB.sejours.some(s=>s.idReservation===r.id)) return {ok:false, error:"Un séjour existe déjà pour cette réservation."};
   const idSejour = "SJ-"+pad(DB.counters.sejour++,4);
-  const s = {idSejour, idReservation:r.id, idClient:r.idClient, numeroChambre:r.numeroChambre, dateArriveeReelle: todayStr(), dateDepartReelle:null, montantTotal:r.montant, statut:"En cours"};
+  const s = {idSejour, idReservation:r.id, idClient:r.idClient, numeroChambre:r.numeroChambre, dateArriveeReelle: todayStr(), dateDepartReelle:null, montantTotal:r.montant, statut:"En cours", presenceSignalee:false, dateSignalement:null};
   DB.sejours.push(s);
   const chambre = DB.chambres.find(c=>c.numeroChambre===r.numeroChambre);
   chambre.statut = "Occupée";
