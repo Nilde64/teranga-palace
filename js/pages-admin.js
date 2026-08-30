@@ -135,7 +135,13 @@ function clientFormModal(client, refresh){
     if(!valid) return;
     const adr = document.getElementById("f-adr").value.trim();
     if(isEdit){ Object.assign(client, {nom:nom.value.trim(), prenom:prenom.value.trim(), email:email.value.trim(), telephone:tel.value.trim(), adresse:adr}); }
-    else{ DB.clients.push({idClient:"CL-"+pad(DB.clients.length+1,3), nom:nom.value.trim(), prenom:prenom.value.trim(), email:email.value.trim(), telephone:tel.value.trim(), adresse:adr}); }
+    else{
+      // Compteur partagé (voir findOrCreateClient dans data.js) pour éviter qu'un
+      // client créé ici et un autre créé au même moment depuis un autre poste/onglet
+      // (côté public ou admin) ne se retrouvent avec le même idClient.
+      if(!DB.counters.client) DB.counters.client = DB.clients.length+1;
+      DB.clients.push({idClient:"CL-"+pad(DB.counters.client++,3), nom:nom.value.trim(), prenom:prenom.value.trim(), email:email.value.trim(), telephone:tel.value.trim(), adresse:adr});
+    }
     if(!save()) return;
     closeModal(); toast(isEdit?"Client modifié":"Client ajouté","Les informations ont été enregistrées."); refresh();
   };

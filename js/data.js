@@ -96,6 +96,7 @@ function recomputeCounters(){
     const n = parseInt(String(r[idField]||"").replace(/[^0-9]/g,""),10);
     return isNaN(n) ? m : Math.max(m, n);
   }, 0);
+  DB.counters.client      = Math.max(DB.counters.client||1, maxNum(DB.clients,"idClient")+1);
   DB.counters.reservation = Math.max(DB.counters.reservation, maxNum(DB.reservations,"id")+1);
   DB.counters.sejour      = Math.max(DB.counters.sejour, maxNum(DB.sejours,"idSejour")+1);
   DB.counters.paiement    = Math.max(DB.counters.paiement, maxNum(DB.paiements,"idPaiement")+1);
@@ -420,7 +421,7 @@ function seedDB(){
     {email:"manager@terangapalace.sn", password:"manager123", role:"Gestionnaire"},
   ];
 
-  const db = {version:DB_VERSION, counters:{reservation:100,sejour:40,paiement:60,facture:40}, clients, chambres, users, reservations:[], sejours:[], paiements:[], factures:[]};
+  const db = {version:DB_VERSION, counters:{client:clients.length+1,reservation:100,sejour:40,paiement:60,facture:40}, clients, chambres, users, reservations:[], sejours:[], paiements:[], factures:[]};
 
   // -------- réservations / séjours / paiements / factures de démonstration --------
   function addReservation(idClient, numeroChambre, arr, dep, nb, statut){
@@ -560,7 +561,13 @@ function searchAvailableRooms(dateArrivee, dateDepart, nbPersonnes, type){
 function findOrCreateClient({nom,prenom,email,telephone,adresse}){
   let c = DB.clients.find(x=>x.email.toLowerCase()===email.toLowerCase());
   if(c){ c.nom=nom; c.prenom=prenom; c.telephone=telephone; if(adresse) c.adresse=adresse; return c; }
-  const idClient = "CL-"+pad(DB.clients.length+1,3);
+  // Utilise un compteur partagé (recalculé depuis Supabase à chaque sync, voir
+  // recomputeCounters) plutôt que DB.clients.length+1 : deux navigateurs différents
+  // créant un compte au même moment auraient pu obtenir le même idClient, ce qui
+  // écrasait silencieusement les coordonnées (nom/email/téléphone) de l'un des deux
+  // clients dans la table partagée dès la synchronisation suivante.
+  if(!DB.counters.client) DB.counters.client = DB.clients.length+1;
+  const idClient = "CL-"+pad(DB.counters.client++,3);
   c = {idClient, nom, prenom, telephone, email, adresse:adresse||""};
   DB.clients.push(c);
   return c;
