@@ -334,10 +334,26 @@ function reservationAdminRows(filter, search){
   }
   list = [...list].sort((a,b)=>b.dateCreation.localeCompare(a.dateCreation));
   if(!list.length) return `<tr><td colspan="9">${emptyState("Aucune réservation trouvée.")}</td></tr>`;
+  // Détecte les réservations Confirmées qui se chevauchent sur une même chambre
+  // (double réservation). En temps normal ceci ne devrait plus arriver grâce au
+  // contrôle de disponibilité fait à la création, mais ça reste utile pour repérer
+  // d'anciennes données ou une modification manuelle problématique.
+  const conflictIds = new Set();
+  const confirmed = DB.reservations.filter(r=>r.statut==="Confirmée");
+  for(let i=0;i<confirmed.length;i++){
+    for(let j=i+1;j<confirmed.length;j++){
+      const a = confirmed[i], b = confirmed[j];
+      if(a.numeroChambre!==b.numeroChambre) continue;
+      if(overlap(new Date(a.dateArrivee), new Date(a.dateDepart), new Date(b.dateArrivee), new Date(b.dateDepart))){
+        conflictIds.add(a.id); conflictIds.add(b.id);
+      }
+    }
+  }
   return list.map(r=>{
     const c = DB.clients.find(cl=>cl.idClient===r.idClient);
     const badge = r.statut==="Confirmée" ? '<span class="badge badge-green">Confirmée</span>' : r.statut==="Annulée" ? '<span class="badge badge-red">Annulée</span>' : '<span class="badge badge-blue">Terminée</span>';
-    return `<tr><td><b>${r.id}</b></td><td>${c?c.prenom+' '+c.nom:'—'}</td><td>N° ${r.numeroChambre}</td><td>${fmtDate(r.dateArrivee)}</td><td>${fmtDate(r.dateDepart)}</td><td>${r.nbPersonnes}</td><td>${fmtMoney(r.montant)}</td><td>${badge}</td>
+    const conflict = conflictIds.has(r.id) ? ` <span class="badge badge-red" title="Une autre réservation confirmée existe sur cette chambre pour des dates qui se chevauchent.">⚠ Double réservation</span>` : "";
+    return `<tr><td><b>${r.id}</b></td><td>${c?c.prenom+' '+c.nom:'—'}</td><td>N° ${r.numeroChambre}${conflict}</td><td>${fmtDate(r.dateArrivee)}</td><td>${fmtDate(r.dateDepart)}</td><td>${r.nbPersonnes}</td><td>${fmtMoney(r.montant)}</td><td>${badge}</td>
     <td class="row-actions">
       <button class="btn btn-outline btn-sm" data-view-res="${r.id}">Voir</button>
       ${r.statut==="Confirmée" ? `<button class="btn btn-outline btn-sm" data-modify="${r.id}">Modifier</button><button class="btn btn-danger btn-sm" data-cancel="${r.id}">Annuler</button>` : ""}
