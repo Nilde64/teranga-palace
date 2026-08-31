@@ -67,8 +67,14 @@ const SB_TABLES = {
    Sans ce compteur, une telle ligne reste "en attente" indéfiniment : elle échoue à
    chaque persist()/sync (toutes les 30s + à chaque sauvegarde), pollue la console
    pour toujours, et — via le filet de sécurité "localOnly" de syncFromSupabase — n'est
-   jamais nettoyée puisqu'elle ne réussit jamais à disparaître du côté serveur. */
-const SB_PUSH_FAILURES = {};
+   jamais nettoyée puisqu'elle ne réussit jamais à disparaître du côté serveur.
+   Conservé en LocalStorage (pas seulement en mémoire) : sinon un simple rechargement
+   de page remet le compteur d'échecs à zéro et une ligne invalide peut ne jamais
+   atteindre le seuil si l'utilisateur recharge la page entre deux tentatives. */
+const SB_FAILURES_KEY = "teranga_palace_sb_failures";
+function loadPushFailures() { try { return JSON.parse(localStorage.getItem(SB_FAILURES_KEY) || "{}"); } catch (e) { return {}; } }
+function savePushFailures(f) { try { localStorage.setItem(SB_FAILURES_KEY, JSON.stringify(f)); } catch (e) { } }
+const SB_PUSH_FAILURES = loadPushFailures();
 const SB_MAX_PUSH_ATTEMPTS = 3;
 
 /* Retire définitivement une ligne durablement invalide de la base locale (elle n'a
@@ -108,12 +114,15 @@ async function pushDBToSupabase(db) {
           if (error) {
             console.error("Supabase upsert", table, row[pk], error);
             SB_PUSH_FAILURES[failKey] = (SB_PUSH_FAILURES[failKey] || 0) + 1;
+            savePushFailures(SB_PUSH_FAILURES);
             if (SB_PUSH_FAILURES[failKey] >= SB_MAX_PUSH_ATTEMPTS) {
               delete SB_PUSH_FAILURES[failKey];
+              savePushFailures(SB_PUSH_FAILURES);
               quarantineRow(db, jsKey, pk, row[pk], error);
             }
-          } else {
+          } else if (SB_PUSH_FAILURES[failKey]) {
             delete SB_PUSH_FAILURES[failKey];
+            savePushFailures(SB_PUSH_FAILURES);
           }
         }
       }
@@ -133,23 +142,48 @@ async function pushDBToSupabase(db) {
 /* Recalcule les compteurs locaux (numérotation des réservations/séjours/paiements/factures)
    à partir du maximum réellement présent côté Supabase, pour limiter le risque de collision
    d'identifiants entre deux navigateurs différents créant des entrées en parallèle. */
+// Aucun compteur ne devrait raisonnablement dépasser ce seuil dans ce projet (examen /
+// usage pédagogique) : sert à repérer, sans ambiguïté, un ID corrompu par l'ancien bug
+// de concaténation (ex: "TP-2026-20262026202600110") plutôt qu'un vrai numéro de séquence.
+// Un tel ID a beau respecter le format attendu (préfixe + chiffres), le nombre qu'il
+// contient est absurde et ne doit JAMAIS entrer dans le calcul du "vrai maximum" —
+// sinon le compteur repart corrompu à chaque recalcul, indéfiniment.
+const MAX_PLAUSIBLE_SEQ = 999999;
 function recomputeCounters() {
   // Ne prend que les chiffres en fin d'identifiant (le vrai numéro de séquence),
   // jamais tous les chiffres du texte : un ID comme "TP-2026-00111" contient déjà
   // "2026" dans son préfixe, donc un simple retrait de tout ce qui n'est pas un
   // chiffre fusionnerait "2026" et "00111" en un grand nombre absurde (202600111),
   // qui grossirait ensuite indéfiniment à chaque resynchronisation.
-  const maxNum = (rows, idField) => rows.reduce((m, r) => {
+  const seq = (row, idField) => {
+    const match = String(row[idField] || "").match(/(\d+)$/);
+    const n = match ? parseInt(match[1], 10) : NaN;
+    return (!isNaN(n) && n <= MAX_PLAUSIBLE_SEQ) ? n : NaN;
+  };
+  // Retire immédiatement (avant même le calcul du maximum) toute ligne dont le numéro
+  // de séquence est implausible : un tel ID est corrompu à coup sûr, ça ne sert à rien
+  // d'attendre 3 échecs Supabase pour le constater (voir SB_MAX_PUSH_ATTEMPTS) — et le
+  // laisser en place fausserait le calcul du "vrai maximum" ci-dessous à chaque appel.
+  const purgeImplausible = (rows, idField, jsKey) => (rows || []).filter(r => {
     const match = String(r[idField] || "").match(/(\d+)$/);
     const n = match ? parseInt(match[1], 10) : NaN;
+    const bad = !isNaN(n) && n > MAX_PLAUSIBLE_SEQ;
+    if (bad) console.warn(`Ligne corrompue retirée localement (numéro de séquence implausible) — table "${jsKey}", ${idField}=${r[idField]}.`);
+    return !bad;
+  });
+  DB.clients = purgeImplausible(DB.clients, "idClient", "clients");
+  DB.reservations = purgeImplausible(DB.reservations, "id", "reservations");
+  DB.sejours = purgeImplausible(DB.sejours, "idSejour", "sejours");
+  DB.paiements = purgeImplausible(DB.paiements, "idPaiement", "paiements");
+  DB.factures = purgeImplausible(DB.factures, "numeroFacture", "factures");
+  const maxNum = (rows, idField) => rows.reduce((m, r) => {
+    const n = seq(r, idField);
     return isNaN(n) ? m : Math.max(m, n);
   }, 0);
-  // Filet de sécurité anti-corruption : si un compteur local est déjà devenu absurde
-  // (hérité d'une session avant le correctif ci-dessus, ex: un compteur qui vaut
-  // plusieurs milliards alors que la vraie dernière réservation est ".. -00110"),
-  // on ne fait plus jamais confiance à ce nombre — on repart du vrai maximum observé
-  // dans les données. Le simple Math.max() d'origine ne pouvait qu'aggraver un
-  // compteur déjà corrompu, jamais le réparer.
+  // Filet de sécurité anti-corruption additionnel : si un compteur local est resté
+  // absurde malgré ce qui précède, on ne lui fait plus jamais confiance — on repart du
+  // vrai maximum observé dans les données (déjà purgées ci-dessus). Le simple Math.max()
+  // d'origine ne pouvait qu'aggraver un compteur déjà corrompu, jamais le réparer.
   const sanitizeCounter = (current, maxN) => {
     const base = maxN + 1;
     if (!Number.isFinite(current) || current > base + 100000) return base;
