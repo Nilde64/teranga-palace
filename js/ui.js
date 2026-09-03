@@ -65,7 +65,7 @@ function routeQuery(){
 /* ==========================================================================
    RENDER : SHELL (nav + routing)
    ========================================================================== */
-const PUBLIC_ROUTES = ["accueil","chambres","reserver","mes-reservations","apropos","contact","connexion"];
+const PUBLIC_ROUTES = ["accueil","chambres","reserver","mes-reservations","galerie","apropos","contact","connexion"];
 const ADMIN_ROUTES = {
   "admin/dashboard":{label:"Dashboard", icon:"gauge", roles:["Réceptionniste","Gestionnaire"]},
   "admin/clients":{label:"Clients", icon:"users", roles:["Réceptionniste"]},
@@ -92,31 +92,36 @@ function render(){
     renderPublicShell(route, session);
   }
   window.scrollTo(0,0);
+
+  /* Les bulles flottantes (WhatsApp / retour en haut) n'ont de sens que côté site public. */
+  const isAdmin = route.startsWith("admin/");
+  const wa = document.getElementById("fab-group");
+  if(wa) wa.style.display = isAdmin ? "none" : "block";
 }
 
 /* ---------------------------- PUBLIC SHELL ---------------------------- */
 function renderPublicShell(route, session){
   const app = document.getElementById("app");
   const navLinks = [
-    ["accueil","Accueil"],["chambres","Chambres"],["reserver","Réserver"],
-    ["mes-reservations","Mes réservations"],["apropos","À propos"],["contact","Contact"]
+    ["accueil","Accueil"],["chambres","Chambres & Suites"],["accueil?section=restaurant","Restaurant"],
+    ["accueil?section=experiences","Expériences"],["galerie","Galerie"],["apropos","À propos"],["contact","Contact"]
   ];
   let navHtml = navLinks.map(([r,l])=>`<a href="#/${r}" class="${route===r?'active':''}">${l}</a>`).join("");
-  let rightHtml = "";
+  let rightHtml = `<a href="#/reserver" class="nav-reserve-btn ${route==='reserver'?'active':''}">Réserver</a>`;
   if(session){
-    rightHtml = `
+    rightHtml += `
       <div class="userchip">
         <span>${session.prenom||session.email}</span>
         <span class="role-tag">${session.role}</span>
       </div>
-      ${session.role!=="Client" ? `<a href="#/admin/dashboard" class="nav-btn">Espace admin</a>` : ""}
+      ${session.role==="Client" ? `<a href="#/mes-reservations" class="nav-btn">Mes réservations</a>` : `<a href="#/admin/dashboard" class="nav-btn">Espace admin</a>`}
       <button class="nav-btn" id="btn-logout">${ic('logout')} Déconnexion</button>`;
   } else {
-    navHtml += `<a href="#/connexion" class="nav-cta ${route==='connexion'?'active':''}">Connexion</a>`;
+    rightHtml += `<a href="#/connexion" class="nav-cta ${route==='connexion'?'active':''}">Connexion</a>`;
   }
 
   app.innerHTML = `
-    <div class="topbar">
+    <div class="topbar${route==='accueil' ? ' topbar-transparent' : ''}">
       <div class="topbar-inner">
         <a href="#/accueil" class="brand">
           <span class="brand-mark">${ic('logo')}</span>
@@ -131,19 +136,26 @@ function renderPublicShell(route, session){
     </div>
     <main id="main-content"></main>
     <footer class="footer">
+      <div class="footer-top">
+        <div class="brand"><span class="brand-mark">${ic('logo')}</span><span class="brand-text"><b>Teranga Palace</b><span>Dakar · Sénégal</span></span></div>
+        <div class="footer-social">
+          <a href="https://wa.me/221338200000" target="_blank" rel="noopener" aria-label="WhatsApp">${ic('mail')}</a>
+          <a href="https://instagram.com/terangapalace" target="_blank" rel="noopener" aria-label="Instagram">${ic('users')}</a>
+          <a href="mailto:contact@terangapalace.sn" aria-label="Email">${ic('mail')}</a>
+        </div>
+      </div>
       <div class="footer-inner">
         <div>
-          <div class="brand" style="margin-bottom:14px;"><span class="brand-mark">${ic('logo')}</span><span class="brand-text"><b>Teranga Palace</b><span>Dakar · Sénégal</span></span></div>
-          <p style="font-size:13px;line-height:1.7;max-width:280px;">Un hôtel 5 étoiles au cœur de Dakar, où l'hospitalité sénégalaise (teranga) rencontre le raffinement contemporain.</p>
+          <p style="font-size:13px;line-height:1.85;max-width:300px;">Un hôtel 5 étoiles au cœur de Dakar, où l'hospitalité sénégalaise (teranga) rencontre le raffinement contemporain.</p>
         </div>
         <div><h5>Explorer</h5>
-          <a href="#/chambres">Nos chambres</a><a href="#/reserver">Réserver</a><a href="#/apropos">À propos</a><a href="#/contact">Contact</a>
+          <a href="#/chambres">Chambres &amp; Suites</a><a href="#/accueil?section=restaurant">Restaurant</a><a href="#/accueil?section=experiences">Expériences</a><a href="#/galerie">Galerie</a><a href="#/apropos">À propos</a>
         </div>
         <div><h5>Contact</h5>
           <a href="tel:+221338200000">+221 33 820 00 00</a><a href="mailto:contact@terangapalace.sn">contact@terangapalace.sn</a><a href="#">Corniche Ouest, Dakar, Sénégal</a>
         </div>
         <div><h5>Accès</h5>
-          <a href="#/connexion">Connexion</a><a href="#/mes-reservations">Mes réservations</a>
+          <a href="#/reserver">Réserver</a><a href="#/connexion">Connexion</a><a href="#/mes-reservations">Mes réservations</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -159,7 +171,8 @@ function renderPublicShell(route, session){
   const slot = document.getElementById("main-content");
   const pageMap = {
     "accueil": pageAccueil, "chambres": pageChambres, "reserver": pageReserver,
-    "mes-reservations": pageMesReservations, "apropos": pageApropos, "contact": pageContact, "connexion": pageConnexion
+    "mes-reservations": pageMesReservations, "galerie": pageGalerie,
+    "apropos": pageApropos, "contact": pageContact, "connexion": pageConnexion
   };
   const fn = pageMap[route] || pageAccueil;
   slot.innerHTML = fn(session);
@@ -253,8 +266,9 @@ function accessDeniedShell(session){
 /* ============================= AFTER-RENDER HOOK (wires up forms/buttons per page) ============================= */
 function afterRenderHook(route, session){
   const hooks = {
+    "accueil": wireAccueil,
     "chambres": wireChambres, "reserver": wireReserver, "mes-reservations": wireMesReservations, "contact": wireContact,
-    "connexion": wireConnexion,
+    "connexion": wireConnexion, "galerie": wireGalerie,
     "admin/dashboard": wireDashboard, "admin/clients": wireAdminClients, "admin/chambres": wireAdminChambres,
     "admin/reservations": wireAdminReservations, "admin/checkin": wireAdminCheckin, "admin/sejours": wireAdminSejours,
     "admin/checkout": wireAdminCheckout, "admin/paiements": wireAdminPaiements, "admin/factures": wireAdminFactures,
@@ -262,5 +276,37 @@ function afterRenderHook(route, session){
   };
   const fn = hooks[route];
   if(fn) fn(session);
+  initScrollReveal();
+}
+
+/* ============================= ANIMATIONS AU SCROLL ============================= */
+/* Fait apparaître progressivement (fondu + léger décalage vers le haut) les
+   éléments marqués ".reveal" quand ils entrent dans le viewport. Purement
+   visuel : n'ajoute ni ne retire aucun contenu, champ ou fonctionnalité. */
+function initScrollReveal(){
+  const els = document.querySelectorAll(".reveal:not(.is-visible)");
+  if(!els.length) return;
+  if(!("IntersectionObserver" in window)){
+    els.forEach(el=>el.classList.add("is-visible"));
+    return;
+  }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add("is-visible");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15, rootMargin:"0px 0px -60px 0px" });
+  els.forEach(el=>{
+    /* décalage en cascade pour les groupes d'éléments (cartes, étapes...) */
+    const group = el.closest("[data-reveal-group]");
+    if(group){
+      const siblings = Array.from(group.querySelectorAll(".reveal"));
+      const idx = siblings.indexOf(el);
+      el.style.transitionDelay = Math.min(idx * 90, 450) + "ms";
+    }
+    io.observe(el);
+  });
 }
 

@@ -4,89 +4,148 @@
 function pageAccueil(session){
   const chambresVedettes = DB.chambres.slice(0,3);
   return `
-  <section class="hero-video-section" style="position:relative;color:var(--ivoire);overflow:hidden;background:radial-gradient(ellipse at 20% 0%, #16304d 0%, var(--bleu-nuit) 60%);">
-    <div class="hero-video-bg" style="position:absolute;inset:0;">
-      <div class="hero-video-overlay" style="position:absolute;inset:0;background:linear-gradient(90deg, rgba(10,20,35,0.92) 0%, rgba(10,20,35,0.75) 35%, rgba(10,20,35,0.35) 65%, rgba(10,20,35,0.15) 100%);"></div>
-    </div>
-
-    <div style="position:absolute;top:0;right:0;width:50%;height:100%;overflow:hidden;z-index:1;">
+  <section class="hero-full" id="hero">
+    <div class="hero-media">
       <video autoplay muted loop playsinline
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;background:#0a1423;"
-             onerror="this.style.display='none';">
+             class="hero-video"
+             onerror="this.parentElement.classList.add('video-fallback');">
         <source src="assets/video/hero.mp4" type="video/mp4">
       </video>
-      <svg viewBox="0 0 420 460" style="position:absolute;inset:0;width:100%;height:100%;">
-        <defs>
-          <linearGradient id="archGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#e6cd93"/><stop offset="100%" stop-color="#c9a15a"/>
-          </linearGradient>
-        </defs>
-        <path d="M40 440 V220 C40 110 120 40 210 40 C300 40 380 110 380 220 V440" fill="none" stroke="url(#archGrad)" stroke-width="3"/>
-        <path d="M80 440 V235 C80 145 138 90 210 90 C282 90 340 145 340 235 V440" fill="none" stroke="rgba(230,205,147,.45)" stroke-width="1.4"/>
-        <path d="M120 440 V245 C120 178 158 138 210 138 C262 138 300 178 300 245 V440" fill="none" stroke="rgba(230,205,147,.28)" stroke-width="1"/>
-        <circle cx="210" cy="245" r="3" fill="#c9a15a"/>
-        <line x1="10" y1="440" x2="410" y2="440" stroke="#c9a15a" stroke-width="2"/>
-        <text x="210" y="405" text-anchor="middle" fill="#faf6ec" font-family="Cormorant Garamond, serif" font-size="15" letter-spacing="4" opacity="0.85">TERANGA</text>
-      </svg>
+      <div class="hero-overlay"></div>
     </div>
-
-    <div style="position:relative;z-index:2;width:100%;max-width:1240px;margin:0 auto;padding:150px 28px 90px;display:flex;align-items:center;justify-content:flex-start;gap:40px;flex-wrap:wrap;">
-      <div style="max-width:640px;flex:1 1 460px;">
-        <div class="eyebrow">Hôtel 5 étoiles · Dakar, Sénégal</div>
-        <h1 style="font-size:60px;line-height:1.05;margin-top:18px;">Teranga Palace</h1>
-        <p style="font-size:19px;font-family:var(--serif);font-style:italic;color:var(--or-clair);margin-top:14px;">L'élégance sénégalaise au cœur de Dakar</p>
-        <p style="margin-top:22px;color:rgba(250,246,236,.8);font-size:15.5px;line-height:1.8;max-width:460px;">Entre océan Atlantique et art de vivre sénégalais, Teranga Palace vous accueille dans un cadre où chaque détail — de la chambre à la table — est pensé pour la sérénité de votre séjour.</p>
-        <div style="display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;">
-          <a href="#/reserver" class="btn btn-gold">Réserver une chambre</a>
-          <a href="#/chambres" class="btn btn-outline-light">Découvrir nos chambres</a>
-        </div>
+    <div class="hero-content">
+      <p class="hero-eyebrow hero-anim hero-anim-1">Hôtel 5 étoiles · Dakar, Sénégal</p>
+      <h1 class="hero-title hero-anim hero-anim-2">Teranga Palace</h1>
+      <p class="hero-tagline hero-anim hero-anim-3">L'élégance sénégalaise, autrement.</p>
+      <p class="hero-sub hero-anim hero-anim-4">Une expérience unique au cœur de Dakar, entre océan Atlantique et art de vivre sénégalais.</p>
+      <div class="hero-actions hero-anim hero-anim-5">
+        <a href="#/reserver" class="btn btn-gold">Réserver votre séjour</a>
+        <a href="#/chambres" class="btn btn-outline-light">Découvrir nos chambres</a>
       </div>
     </div>
-</section>
+    <div class="hero-scroll-cue hero-anim hero-anim-6" aria-hidden="true"><span></span><em>Faites défiler</em></div>
+  </section>
 
   <section class="section">
-    <div class="section-head">
+    <div class="section-head reveal">
       <div class="eyebrow">L'établissement</div>
       <h2>Une hospitalité pensée dans les moindres détails</h2>
       <p>Teranga signifie « hospitalité » en wolof — c'est la promesse que nous tenons depuis notre porte d'entrée jusqu'à votre chambre. 48 chambres et suites, un restaurant gastronomique, une piscine à débordement face à l'océan et une équipe attentive à chaque étape de votre séjour.</p>
     </div>
-    <div class="grid-4" style="display:grid;gap:26px;">
+    <div class="grid-4" data-reveal-group style="display:grid;gap:26px;">
       ${[
         ["Emplacement","Corniche Ouest, à deux pas du centre d'affaires et des plages de Dakar."],
         ["Restauration","Cuisine sénégalaise et internationale, produits locaux et de saison."],
         ["Bien-être","Piscine à débordement, spa et salle de sport ouverts toute la journée."],
         ["Service","Réception ouverte 24h/24, conciergerie et transferts aéroport."]
-      ].map(([t,d])=>`<div><h4 style="font-size:19px;margin-bottom:8px;">${t}</h4><p style="font-size:13.5px;color:var(--text-soft);line-height:1.7;">${d}</p></div>`).join("")}
+      ].map(([t,d])=>`<div class="reveal"><h4 style="font-size:19px;margin-bottom:8px;">${t}</h4><p style="font-size:13.5px;color:var(--text-soft);line-height:1.7;">${d}</p></div>`).join("")}
+    </div>
+  </section>
+
+  <section class="section-tight" style="padding-top:0;padding-bottom:0;">
+    <div class="grid-4" data-reveal-group style="display:grid;gap:26px;text-align:center;padding:0 0 46px;">
+      ${[["48","Chambres et suites"],["4.8/5","Satisfaction client"],["24/7","Réception ouverte"],["12","Nationalités accueillies chaque mois"]]
+        .map(([n,l])=>`<div class="reveal">
+          <div class="stat-counter" data-counter="${n}">0</div>
+          <div style="font-size:12.5px;letter-spacing:.04em;color:var(--text-soft);margin-top:6px;">${l}</div>
+        </div>`).join("")}
     </div>
   </section>
 
   <section class="section section-tight" style="background:var(--sable);">
-    <div class="section-head" style="margin-bottom:34px;">
+    <div class="section-head reveal" style="margin-bottom:34px;">
       <div class="eyebrow">Nos chambres</div>
       <h2>Un cadre pour chaque séjour</h2>
     </div>
-    <div class="room-grid">${chambresVedettes.map(roomCard).join("")}</div>
+    <div class="room-grid" data-reveal-group>${chambresVedettes.map(roomCard).join("")}</div>
     <div style="text-align:center;margin-top:34px;"><a href="#/chambres" class="btn btn-dark">Voir toutes les chambres</a></div>
   </section>
 
+  <!-- ===== RESTAURANT ===== -->
+  <section class="section editorial-split" id="restaurant">
+    <div class="editorial-visual reveal">
+      <img src="assets/images/offres/petit-dejeuner.jpg" alt="Restaurant panoramique Teranga Palace" loading="lazy">
+    </div>
+    <div class="editorial-text reveal">
+      <div class="eyebrow">Gastronomie</div>
+      <h2>L'art de la gastronomie</h2>
+      <p>Face à l'océan Atlantique, notre restaurant panoramique marie les saveurs sénégalaises aux techniques internationales. Une carte courte, des produits locaux et de saison, et une salle pensée comme un salon plus que comme une salle de restaurant.</p>
+      <p class="editorial-note">Petit-déjeuner, déjeuner et dîner — service en salle, en terrasse ou en chambre.</p>
+      <a href="#/reserver" class="btn btn-outline">Découvrir notre restaurant</a>
+    </div>
+  </section>
+
+  <!-- ===== EXPÉRIENCES TERANGA ===== -->
+  <section class="section section-tight experiences-section" id="experiences" style="background:var(--bleu-nuit);">
+    <div class="section-head reveal" style="margin-bottom:40px;">
+      <div class="eyebrow">L'esprit Teranga</div>
+      <h2>Une expérience, pas seulement un séjour</h2>
+      <p>Teranga — l'hospitalité en wolof. Une philosophie qui infuse chaque instant de votre passage à Dakar.</p>
+    </div>
+    <div class="experience-grid" data-reveal-group>
+      ${[
+        ["assets/images/offres/spa.jpg","Bien-être","Piscine à débordement, spa et soins signature face à l'océan."],
+        ["assets/images/offres/romantique.jpg","Évasion & Océan","Corniche Ouest, sable fin et couchers de soleil sur l'Atlantique."],
+        ["assets/images/facade-hotel.jpg","Dakar & Découverte","Les quartiers, marchés et sites emblématiques de la capitale."],
+        ["assets/images/offres/affaires.jpg","Hospitalité sénégalaise","Un accueil chaleureux, dans la pure tradition de la teranga."]
+      ].map(([photo,t,d])=>`
+      <div class="experience-tile reveal">
+        <img src="${photo}" alt="${t}" loading="lazy">
+        <div class="experience-tile-caption">
+          <h4>${t}</h4>
+          <p>${d}</p>
+        </div>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== NOS OFFRES ===== -->
+  <section class="section">
+    <div class="section-head reveal" style="margin-bottom:34px;">
+      <div class="eyebrow">Nos formules</div>
+      <h2>Nos offres</h2>
+      <p>Des formules pensées pour chaque type de séjour, à réserver directement en ligne.</p>
+    </div>
+    <div class="offers-grid" data-reveal-group>
+      ${[
+        ["assets/images/offres/petit-dejeuner.jpg","coffee","Petit-déjeuner inclus",null,"Un copieux buffet sénégalais et continental servi chaque matin au restaurant panoramique, pour bien commencer la journée."],
+        ["assets/images/offres/romantique.jpg","heart","Escapade Romantique","Sur demande","Décoration florale, bouteille de bienvenue et surclassement selon disponibilité, pour un séjour à deux inoubliable."],
+        ["assets/images/offres/spa.jpg","leaf","Bien-être & Spa",null,"Accès libre à la piscine à débordement, au spa et à la salle de sport, avec un soin découverte offert dès 2 nuits."],
+        ["assets/images/offres/affaires.jpg","briefcase","Séjour Affaires",null,"Wi-Fi haut débit, espace bureau en chambre et tarifs préférentiels pour les séjours prolongés en semaine."],
+        ["assets/images/offres/transfert-aeroport.jpg","users","Transfert Aéroport Offert","Dès 3 nuits","Un chauffeur vous accueille à l'aéroport et vous conduit à l'hôtel, sans frais supplémentaires."],
+        ["assets/images/offres/reservation-anticipee.jpg","sparkle","Réservation Anticipée","-15%","Réservez au moins 21 jours à l'avance et bénéficiez d'une réduction sur le tarif de votre chambre."]
+      ].map(([photo,icon,t,tag,d])=>`
+      <div class="offer-card reveal">
+        ${tag ? `<span class="offer-tag badge badge-gold">${tag}</span>` : ""}
+        <div class="offer-visual"><img src="${photo}" alt="${t}" loading="lazy"></div>
+        <div class="offer-body">
+          <div class="offer-icon">${ic(icon)}</div>
+          <h4>${t}</h4>
+          <p>${d}</p>
+          <a href="#/reserver" class="btn btn-outline btn-sm">Réserver cette offre</a>
+        </div>
+      </div>`).join("")}
+    </div>
+  </section>
+
   <section class="section section-dark">
-    <div class="section-head"><div class="eyebrow">L'expérience client</div><h2>Réservez en toute confiance</h2>
+    <div class="section-head reveal"><div class="eyebrow">L'expérience client</div><h2>Réservez en toute confiance</h2>
     <p>Disponibilités vérifiées en temps réel, confirmation immédiate et gestion simple de vos réservations en ligne.</p></div>
-    <div class="grid-4" style="display:grid;gap:1px;background:rgba(250,246,236,.12);">
+    <div class="grid-4" data-reveal-group style="display:grid;gap:1px;background:rgba(250,248,243,.12);">
       ${[["01","Choisissez vos dates","Arrivée, départ et nombre de personnes."],
          ["02","Sélectionnez une chambre","Parmi les chambres réellement disponibles."],
          ["03","Confirmez","Le prix est calculé automatiquement."],
          ["04","Recevez votre confirmation","Un identifiant unique vous est attribué."]]
-        .map(([n,t,d])=>`<div style="background:var(--bleu-nuit);padding:26px 22px;">
+        .map(([n,t,d])=>`<div class="reveal" style="background:var(--bleu-nuit);padding:26px 22px;">
           <div style="color:var(--or);font-family:var(--serif);font-size:26px;">${n}</div>
           <div style="font-weight:600;margin:10px 0 6px;">${t}</div>
-          <div style="font-size:12.5px;color:rgba(250,246,236,.6);line-height:1.6;">${d}</div></div>`).join("")}
+          <div style="font-size:12.5px;color:rgba(250,248,243,.6);line-height:1.6;">${d}</div></div>`).join("")}
     </div>
   </section>
 
   <!-- ===== LOCALISATION ===== -->
-    <section id="localisation" class="location">
-<div class="location-text">
+    <section id="localisation" class="location" data-reveal-group>
+<div class="location-text reveal">
 <p class="eyebrow">Emplacement</p>
 <h2>Au cœur de Dakar</h2>
 <p>Teranga Palace se situe à proximité de la Corniche Ouest, à quelques minutes des
@@ -97,12 +156,95 @@ function pageAccueil(session){
 <li><strong>Email</strong> — reservations@terangapalace.sn</li>
 </ul>
 </div>
-<div class="location-map">
+<div class="location-map reveal">
 <iframe title="Carte de Dakar" src="https://www.google.com/maps?q=Dakar,Senegal&output=embed"
 loading="lazy">
 </iframe>
 </div>
-</section>`;
+</section>
+
+  <!-- ===== AVIS CLIENTS ===== -->
+  <section class="section reveal">
+    <div class="section-head"><div class="eyebrow">Ils sont venus</div><h2>Ce que disent nos clients</h2></div>
+    ${testimonialsMarkup()}
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="section section-tight" style="background:var(--sable);">
+    <div class="section-head reveal" style="margin-bottom:20px;"><div class="eyebrow">Questions fréquentes</div><h2>Tout savoir avant de réserver</h2></div>
+    <div class="faq-list reveal">
+      ${[
+        ["À quelle heure sont l'arrivée et le départ ?","L'arrivée (check-in) se fait à partir de 14h00 et le départ (check-out) avant 12h00. Un départ tardif peut être demandé à la réception selon disponibilité."],
+        ["Puis-je annuler ou modifier ma réservation ?","Oui, vous pouvez consulter et gérer vos réservations depuis l'espace « Mes réservations » une fois connecté à votre compte."],
+        ["Le petit-déjeuner est-il inclus ?","Selon la formule choisie lors de la réservation. Le restaurant panoramique propose également une carte sénégalaise et internationale à la carte."],
+        ["L'hôtel propose-t-il un transfert depuis l'aéroport ?","Oui, notre conciergerie organise des transferts aéroport sur demande, disponibles 24h/24."],
+        ["Les animaux sont-ils acceptés ?","Les animaux de compagnie de petite taille sont acceptés dans certaines chambres, sur demande préalable auprès de la réception."]
+      ].map(([q,a],i)=>`
+      <div class="faq-item${i===0?" open":""}">
+        <button type="button" class="faq-question" data-faq-toggle>
+          <span>${q}</span><span class="faq-plus">+</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">${a}</div></div>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== NEWSLETTER ===== -->
+  <section class="newsletter-band reveal">
+    <div class="newsletter-inner">
+      <div class="newsletter-icon">${ic('mail')}</div>
+      <div class="eyebrow" style="color:var(--or-fonce);">Restons en contact</div>
+      <h2 style="color:var(--bleu-nuit);margin-top:10px;">Recevez nos offres exclusives</h2>
+      <p style="color:var(--text-soft);font-size:13.5px;margin-top:10px;">Promotions, événements et nouveautés de Teranga Palace, directement dans votre boîte mail — sans spam, désinscription en un clic.</p>
+
+      <div class="newsletter-perks">
+        <span>${ic('sparkle')} Offres exclusives</span>
+        <span>${ic('calendar')} Avant-premières</span>
+        <span>${ic('heart')} Invitations événements</span>
+      </div>
+
+      <form class="newsletter-form" id="newsletter-form">
+        <div class="newsletter-input-wrap">
+          ${ic('mail')}
+          <input type="email" id="nl-email" placeholder="Votre adresse email" required>
+        </div>
+        <button type="submit" class="btn btn-gold">S'inscrire</button>
+      </form>
+      <p style="color:var(--text-soft);opacity:.8;font-size:11px;margin-top:14px;">En vous inscrivant, vous acceptez de recevoir nos communications. Vous pourrez vous désinscrire à tout moment.</p>
+
+      <div class="newsletter-success" id="newsletter-success">
+        <div class="newsletter-success-icon">${ic('check')}</div>
+        <h4>Merci pour votre inscription !</h4>
+        <p>Vous recevrez bientôt nos offres exclusives par email.</p>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ---------------------------- AVIS CLIENTS (témoignages) ---------------------------- */
+const TESTIMONIALS = [
+  {texte:"Un séjour absolument mémorable. Le service allie la chaleur sénégalaise à une rigueur toute internationale.", auteur:"Aïssatou D. — Dakar", note:5},
+  {texte:"Chambre magnifique avec vue sur l'océan, personnel aux petits soins du premier au dernier jour.", auteur:"Marc L. — Paris", note:5},
+  {texte:"La réservation en ligne était simple et la confirmation immédiate. Exactement ce qui était promis.", auteur:"Fatou S. — Abidjan", note:4},
+  {texte:"Le restaurant panoramique à lui seul justifie le séjour. Une adresse à recommander sans hésiter.", auteur:"Thomas K. — Bruxelles", note:5},
+];
+function testimonialsMarkup(){
+  return `
+  <div class="testimonials-track">
+    <div class="testimonials-slides" id="testimonials-slides">
+      ${TESTIMONIALS.map(t=>`
+      <div class="testimonial-slide">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">${"★".repeat(t.note)}${"☆".repeat(5-t.note)}</div>
+          <p class="testimonial-quote">« ${t.texte} »</p>
+          <div class="testimonial-author">${t.auteur}</div>
+        </div>
+      </div>`).join("")}
+    </div>
+  </div>
+  <div class="testimonial-dots" id="testimonial-dots">
+    ${TESTIMONIALS.map((_,i)=>`<button type="button" class="testimonial-dot${i===0?" active":""}" data-dot="${i}" aria-label="Avis ${i+1}"></button>`).join("")}
+  </div>`;
 }
 
 /* Équipements affichés en petits badges sur les cards (purement visuel — la fiche
@@ -123,7 +265,7 @@ function roomCard(c){
     : c.statut==="Occupée" ? '<span class="badge badge-solid badge-red">Occupée</span>'
     : '<span class="badge badge-solid badge-gray">Maintenance</span>';
   const visual = roomImageTag(c, "width:100%;height:100%;object-fit:cover;");
-  return `<div class="room-card">
+  return `<div class="room-card reveal">
     <div class="room-visual" style="background:var(--bleu-nuit);">
       ${visual}
       <div style="position:absolute;top:14px;left:14px;">${statusBadge}</div>
@@ -151,7 +293,7 @@ function pageChambres(){
     <div class="section" style="padding:60px 28px 0;">
       <div class="eyebrow">Hébergement</div>
       <h2 style="font-size:38px;margin-top:10px;">Nos chambres &amp; suites</h2>
-      <p style="color:rgba(250,246,236,.65);margin-top:12px;max-width:600px;">De la chambre Simple à la Suite Présidentielle, chaque espace conjugue confort moderne et raffinement sénégalais.</p>
+      <p style="color:rgba(250,248,243,.65);margin-top:12px;max-width:600px;">De la chambre Simple à la Suite Présidentielle, chaque espace conjugue confort moderne et raffinement sénégalais.</p>
     </div>
   </section>
   <section class="section">
@@ -175,6 +317,147 @@ function wireChambres(){
 
 function emptyState(msg){
   return `<div class="empty-state" style="grid-column:1/-1;">${ic('empty')}<h4>Rien à afficher</h4><p>${msg}</p></div>`;
+}
+
+/* ---------------------------- PAGE GALERIE ----------------------------
+   Galerie photo immersive des chambres — remplace l'ancienne page "Vue 3D".
+   Réutilise les vraies données/images des chambres (roomImageTag) : chaque
+   vignette ouvre une visionneuse plein écran avec navigation clavier/flèches
+   et un accès direct à la réservation de la chambre affichée. */
+function galleryTile(c, index){
+  const visual = roomImageTag(c, "width:100%;height:100%;object-fit:cover;");
+  return `<button type="button" class="gallery-tile reveal" data-gallery-index="${index}" aria-label="Agrandir la photo de la chambre ${c.numeroChambre}">
+    <div class="gallery-tile-img">${visual}</div>
+    <div class="gallery-tile-overlay">
+      <span class="gallery-tile-zoom">${ic('search')}</span>
+      <div class="gallery-tile-info">
+        <span class="gallery-tile-type">Chambre ${c.type}</span>
+        <span class="gallery-tile-num">N° ${c.numeroChambre} · ${fmtMoney(c.prixParNuit)}/nuit</span>
+      </div>
+    </div>
+  </button>`;
+}
+
+function pageGalerie(){
+  const types = ["Toutes","Simple","Double","Suite"];
+  return `
+  <section class="section-dark viz-gallery-hero">
+    <div class="gallery-intro-card reveal">
+      <div class="eyebrow">${ic('camera')} Galerie photo</div>
+      <h2>Découvrez Teranga Palace en images</h2>
+      <p style="margin-top:14px;color:rgba(250,248,243,.68);font-size:14.5px;line-height:1.8;">Parcourez nos chambres et suites en photo, cliquez sur une vignette pour l'agrandir, et réservez directement l'espace qui vous plaît.</p>
+    </div>
+  </section>
+  <section class="section viz-gallery-section reveal">
+    <div style="display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;" id="gallery-filters">
+      ${types.map(t=>`<button class="btn btn-sm ${t==='Toutes'?'btn-dark':'btn-outline'}" data-gallery-filter="${t}">${t}</button>`).join("")}
+    </div>
+    <div class="gallery-grid" id="gallery-grid" data-reveal-group>${DB.chambres.map(galleryTile).join("")}</div>
+  </section>
+
+  <div class="gallery-lightbox" id="gallery-lightbox">
+    <div class="gallery-lightbox-backdrop" id="gallery-lightbox-backdrop"></div>
+    <div class="gallery-lightbox-inner">
+      <button type="button" class="gallery-lightbox-close" id="gallery-lightbox-close" aria-label="Fermer">✕</button>
+      <button type="button" class="gallery-lightbox-nav gallery-lightbox-prev" id="gallery-lightbox-prev" aria-label="Photo précédente">‹</button>
+      <div class="gallery-lightbox-media" id="gallery-lightbox-media"></div>
+      <button type="button" class="gallery-lightbox-nav gallery-lightbox-next" id="gallery-lightbox-next" aria-label="Photo suivante">›</button>
+      <div class="gallery-lightbox-caption" id="gallery-lightbox-caption"></div>
+    </div>
+  </div>`;
+}
+
+function wireGalerie(){
+  let currentList = DB.chambres.slice();
+  let currentIndex = 0;
+  let currentFilterLabel = "Toutes";
+
+  const grid = document.getElementById("gallery-grid");
+  const lightbox = document.getElementById("gallery-lightbox");
+  const media = document.getElementById("gallery-lightbox-media");
+  const caption = document.getElementById("gallery-lightbox-caption");
+
+  function renderGrid(list){
+    const msg = currentFilterLabel === "Toutes" ? "Chargement des chambres…" : "Aucune chambre dans cette catégorie.";
+    grid.innerHTML = list.length ? list.map(galleryTile).join("") : emptyState(msg);
+    wireTiles(list);
+    initScrollReveal();
+  }
+
+  function wireTiles(list){
+    grid.querySelectorAll("[data-gallery-index]").forEach(btn=>{
+      btn.onclick = ()=> openLightbox(list, parseInt(btn.dataset.galleryIndex, 10));
+    });
+  }
+
+  function openLightbox(list, index){
+    currentList = list;
+    currentIndex = index;
+    renderLightboxContent();
+    lightbox.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove("is-open");
+    document.body.style.overflow = "";
+  }
+
+  function step(delta){
+    currentIndex = (currentIndex + delta + currentList.length) % currentList.length;
+    renderLightboxContent();
+  }
+
+  function renderLightboxContent(){
+    const c = currentList[currentIndex];
+    if(!c) return;
+    media.innerHTML = roomImageTag(c, "width:100%;height:100%;object-fit:cover;");
+    caption.innerHTML = `
+      <div class="gallery-caption-text">
+        <span class="gallery-caption-type">Chambre ${c.type} · N° ${c.numeroChambre}</span>
+        <span class="gallery-caption-desc">${c.description || ""}</span>
+      </div>
+      <div class="gallery-caption-side">
+        <span class="gallery-caption-price">${fmtMoney(c.prixParNuit)}<small>/nuit</small></span>
+        <a href="#/reserver?chambre=${c.numeroChambre}" class="btn btn-gold btn-sm">Réserver</a>
+      </div>`;
+  }
+
+  renderGrid(currentList);
+  // Filet de sécurité : si DB.chambres n'est pas encore disponible au moment
+  // exact du premier rendu (ex. hydratation en cours), on retente une fois
+  // peu après sans qu'aucune action de l'utilisateur ne soit nécessaire.
+  if(!currentList.length){
+    setTimeout(()=>{
+      if(document.getElementById("gallery-grid") === grid){
+        currentList = DB.chambres.slice();
+        renderGrid(currentList);
+      }
+    }, 400);
+  }
+
+  document.querySelectorAll("[data-gallery-filter]").forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll("[data-gallery-filter]").forEach(b=>{ b.classList.remove("btn-dark"); b.classList.add("btn-outline"); });
+      btn.classList.add("btn-dark"); btn.classList.remove("btn-outline");
+      const t = btn.dataset.galleryFilter;
+      currentFilterLabel = t;
+      renderGrid(t==="Toutes" ? DB.chambres.slice() : DB.chambres.filter(c=>c.type===t));
+    };
+  });
+
+  document.getElementById("gallery-lightbox-close").onclick = closeLightbox;
+  document.getElementById("gallery-lightbox-backdrop").onclick = closeLightbox;
+  document.getElementById("gallery-lightbox-prev").onclick = ()=>step(-1);
+  document.getElementById("gallery-lightbox-next").onclick = ()=>step(1);
+
+  const onKey = (e)=>{
+    if(!lightbox.classList.contains("is-open")) return;
+    if(e.key==="Escape") closeLightbox();
+    if(e.key==="ArrowLeft") step(-1);
+    if(e.key==="ArrowRight") step(1);
+  };
+  document.addEventListener("keydown", onKey);
 }
 
 /* ---------------------------- PAGE RÉSERVER ---------------------------- */
@@ -409,7 +692,7 @@ function wireReserver(rawSession){
       resultsEl.innerHTML = `<p style="font-size:13px;color:var(--text-soft);margin-bottom:16px;">${rooms.length} chambre(s) disponible(s) pour ${nuits} nuit(s), du ${fmtDate(arrivee.value)} au ${fmtDate(depart.value)}.</p>
         <div class="room-grid">` + rooms.map(c=>`
           <div class="room-card" style="cursor:pointer;" data-pick-room="${c.numeroChambre}">
-            <div class="room-visual" style="background:linear-gradient(135deg,#122a44,#c9a15a22);">
+            <div class="room-visual" style="background:var(--bleu-nuit);">
               ${roomImageTag(c, "width:100%;height:100%;object-fit:cover;")}
             </div>
             <div class="room-body">
@@ -429,7 +712,7 @@ function wireReserver(rawSession){
           document.getElementById("price-summary").innerHTML = `
             <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;"><span>Chambre ${chambre.type} N° ${chambre.numeroChambre}</span><span>${fmtMoney(chambre.prixParNuit)} / nuit</span></div>
             <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;color:var(--text-soft);"><span>${fmtDate(RES_STATE.dateArrivee)} → ${fmtDate(RES_STATE.dateDepart)}</span><span>${nuits2} nuit(s)</span></div>
-            <div style="display:flex;justify-content:space-between;font-family:var(--serif);font-size:20px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(11,27,46,.1);"><span>Montant total</span><span>${fmtMoney(chambre.prixParNuit*nuits2)}</span></div>`;
+            <div style="display:flex;justify-content:space-between;font-family:var(--serif);font-size:20px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(13,27,46,.1);"><span>Montant total</span><span>${fmtMoney(chambre.prixParNuit*nuits2)}</span></div>`;
           fillInfoFromSession();
           goStep(4);
         };
@@ -636,28 +919,213 @@ function wireReservationActions(container, refresh){
   });
 }
 
+/* ---------------------------- MÉDAILLES DE DISTINCTIONS ----------------------------
+   Vraies médailles illustrées (ruban à rayures, disque métallique en relief avec
+   dégradé radial + reflet, tranche crénelée façon pièce, plaque centrale avec icône)
+   pour la section "Reconnu par". 100% SVG en ligne, aucune dépendance externe,
+   aucun logo réel de tiers reproduit. */
+const MEDAL_ICONS = {
+  star:`<path d="M0 -13 L3.1 -4.2 12.4 -4 5 1.7 7.6 10.6 0 5.2 -7.6 10.6 -5 1.7 -12.4 -4 -3.1 -4.2 Z" stroke-linejoin="round"/>`,
+  shield:`<path d="M0 -14 10.2 -9.3 V2.8 C10.2 10.2 4.7 14.9 0 16.7 C-4.7 14.9 -10.2 10.2 -10.2 2.8 V-9.3 Z"/><path d="M0 -5.6 2.1 -0.7 7.4 -0.5 3.2 2.8 4.6 7.8 0 4.8 -4.6 7.8 -3.2 2.8 -7.4 -0.5 -2.1 -0.7 Z" stroke-width="1"/>`,
+  key:`<circle cx="-5.6" cy="-5.6" r="5.2"/><path d="M-1.9 -1.9 L9.4 9.4"/><path d="M5.4 5.4 L8.4 2.4"/><path d="M7.9 7.9 L10.9 4.9"/>`,
+  book:`<path d="M-11.2 -6.6 C-7.5 -8.5 -2.8 -8.5 0 -6.6 C2.8 -8.5 7.5 -8.5 11.2 -6.6 V8.4 C7.5 6.6 2.8 6.6 0 8.4 C-2.8 6.6 -7.5 6.6 -11.2 8.4 Z"/><line x1="0" y1="-6.6" x2="0" y2="8.4"/>`,
+};
+const MEDAL_METALS = {
+  gold:  {hi:"#fbeec4", mid:"#ad8a3f", sh:"#8a6a2c", ring:"#d3b876"},
+  silver:{hi:"#f3f6f8", mid:"#b7c0c9", sh:"#727b85", ring:"#dfe4e8"},
+  bronze:{hi:"#eccaa0", mid:"#b97a4e", sh:"#71431f", ring:"#e0b088"},
+  green: {hi:"#d7ecda", mid:"#4f8a5f", sh:"#2c4f34", ring:"#a9d3b3"},
+};
+function ribbonStripes(colors){
+  const n = colors.length, step = 100/n;
+  return colors.map((c,i)=>`<stop offset="${(i*step).toFixed(2)}%" stop-color="${c}"/><stop offset="${((i+1)*step).toFixed(2)}%" stop-color="${c}"/>`).join("");
+}
+function medalGraphic(uid, iconKey, metalKey, ribbonColors){
+  const m = MEDAL_METALS[metalKey];
+  const gradId = `medal-metal-${uid}`, ribbonId = `medal-ribbon-${uid}`, shadowId = `medal-shadow-${uid}`;
+  // tranche crénelée (petits traits autour du disque)
+  let notches = "";
+  for(let i=0;i<40;i++){
+    const a = (i/40)*Math.PI*2;
+    const x1=70+Math.cos(a)*50.5, y1=142+Math.sin(a)*50.5;
+    const x2=70+Math.cos(a)*47.5, y2=142+Math.sin(a)*47.5;
+    notches += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${m.sh}" stroke-width=".8" opacity=".55"/>`;
+  }
+  return `
+  <svg viewBox="0 0 140 226" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;overflow:visible;">
+    <defs>
+      <radialGradient id="${gradId}" cx="42%" cy="34%" r="75%">
+        <stop offset="0%" stop-color="${m.hi}"/><stop offset="55%" stop-color="${m.mid}"/><stop offset="100%" stop-color="${m.sh}"/>
+      </radialGradient>
+      <linearGradient id="${ribbonId}" x1="0" y1="0" x2="1" y2="0">${ribbonStripes(ribbonColors)}</linearGradient>
+      <filter id="${shadowId}" x="-40%" y="-20%" width="180%" height="160%">
+        <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity=".38"/>
+      </filter>
+    </defs>
+    <g filter="url(#${shadowId})">
+      <!-- ruban -->
+      <path d="M52,0 H88 V60 L70,47 L52,60 Z" fill="url(#${ribbonId})"/>
+      <path d="M52,0 H88 V60 L70,47 L52,60 Z" fill="#000" opacity=".08"/>
+      <path d="M52,0 L70,10 L88,0 V6 L70,15 L52,6 Z" fill="#000" opacity=".18"/>
+      <!-- attache -->
+      <circle cx="70" cy="66" r="6.5" fill="${m.mid}" stroke="${m.sh}" stroke-width="1"/>
+      <!-- disque -->
+      <circle cx="70" cy="142" r="52" fill="url(#${gradId})" stroke="${m.sh}" stroke-width="1.4"/>
+      ${notches}
+      <circle cx="70" cy="142" r="44" fill="none" stroke="${m.hi}" stroke-width="1" opacity=".7"/>
+      <circle cx="70" cy="142" r="38" fill="#0d1b2e" stroke="${m.mid}" stroke-width="2"/>
+      <circle cx="70" cy="142" r="38" fill="none" stroke="${m.hi}" stroke-width=".6" opacity=".5"/>
+      <g transform="translate(70 146)" stroke="${m.ring}" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${MEDAL_ICONS[iconKey]}</g>
+      <!-- reflet brillant -->
+      <ellipse cx="52" cy="118" rx="16" ry="9" fill="#fff" opacity=".22" transform="rotate(-28 52 118)"/>
+    </g>
+  </svg>`;
+}
+
 function pageApropos(){
   return `
+  <!-- ===== EN-TÊTE — bandeau photographique ===== -->
+  <section class="about-header">
+    <div class="about-header-media">
+      <img src="assets/images/facade-hotel.jpg" alt="Façade de Teranga Palace">
+      <div class="about-header-overlay"></div>
+    </div>
+    <div class="about-header-content reveal">
+      <p class="breadcrumb"><a href="#/accueil">Accueil</a><span>/</span>À propos</p>
+      <div class="eyebrow">Notre histoire</div>
+      <h1>À propos de Teranga Palace</h1>
+      <p>Depuis la Corniche Ouest de Dakar, Teranga Palace réunit l'art de recevoir sénégalais et les standards internationaux de l'hôtellerie de luxe.</p>
+    </div>
+  </section>
+
+  <!-- ===== UNE ADRESSE PENSÉE POUR VOUS ===== -->
+  <section class="section editorial-split">
+    <div class="editorial-visual reveal">
+      <img src="assets/images/chambre-301.jpg" alt="Suite Teranga Palace" loading="lazy">
+    </div>
+    <div class="editorial-text reveal">
+      <div class="eyebrow">Une adresse pensée pour vous</div>
+      <h2>48 chambres et suites face à l'océan</h2>
+      <p>Face à l'océan Atlantique, l'hôtel propose 48 chambres et suites, un restaurant panoramique, une piscine à débordement et des espaces de bien-être. Chaque chambre a été conçue avec des matériaux locaux — bois, raphia, tissus wax — pour une ambiance à la fois luxueuse et chaleureuse.</p>
+      <p class="editorial-note">Teranga désigne l'hospitalité, une valeur fondamentale de la culture sénégalaise — celle que notre équipe s'engage à vous offrir du premier contact jusqu'à votre retour.</p>
+      <a href="#/chambres" class="btn btn-outline">Découvrir nos chambres</a>
+    </div>
+  </section>
+
+  <!-- ===== CHIFFRES CLÉS ===== -->
+  <section class="section-tight" style="background:var(--bleu-nuit);color:var(--ivoire);">
+    <div class="grid-4" data-reveal-group style="display:grid;gap:26px;text-align:center;padding:56px 28px;max-width:1240px;margin:0 auto;">
+      ${[["48","Chambres et suites"],["24/7","Réception et conciergerie"],["4.8/5","Satisfaction client moyenne"],["2014","Année d'ouverture"]].map(([n,l])=>`
+      <div class="reveal">
+        <div class="stat-counter" data-counter="${n}" style="color:var(--or-clair);">0</div>
+        <div style="font-size:12.5px;color:rgba(250,248,243,.65);margin-top:6px;">${l}</div>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== NOS VALEURS ===== -->
   <section class="section">
-    <div class="section-head"><div class="eyebrow">Notre histoire</div><h2>À propos de Teranga Palace</h2>
-      <p>Depuis la Corniche Ouest de Dakar, Teranga Palace réunit l'art de recevoir sénégalais et les standards internationaux de l'hôtellerie de luxe.</p></div>
-    <div class="grid-2" style="display:grid;gap:60px;">
-      <div>
-        <h4 style="font-size:22px;margin-bottom:12px;">Une adresse pensée pour vous</h4>
-        <p style="font-size:14px;color:var(--text-soft);line-height:1.8;">Face à l'océan Atlantique, l'hôtel propose 48 chambres et suites, un restaurant panoramique, une piscine à débordement et des espaces de bien-être. Chaque chambre a été conçue avec des matériaux locaux — bois, raphia, tissus wax — pour une ambiance à la fois luxueuse et chaleureuse.</p>
-        <h4 style="font-size:22px;margin:26px 0 12px;">La Teranga, notre valeur cardinale</h4>
-        <p style="font-size:14px;color:var(--text-soft);line-height:1.8;">« Teranga » désigne l'hospitalité, une valeur fondamentale de la culture sénégalaise. Chaque membre de notre équipe s'engage à faire de votre séjour une expérience mémorable, du premier contact jusqu'à votre retour.</p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:16px;">
-        ${[["48","Chambres et suites"],["24/7","Réception et conciergerie"],["4.8/5","Satisfaction client moyenne"]].map(([n,l])=>`
-        <div class="panel" style="display:flex;align-items:center;gap:18px;">
-          <div style="font-family:var(--serif);font-size:34px;color:var(--or);">${n}</div>
-          <div style="font-size:13.5px;color:var(--text-soft);">${l}</div>
-        </div>`).join("")}
+    <div class="section-head reveal"><div class="eyebrow">Ce qui nous anime</div><h2>Nos valeurs</h2></div>
+    <div class="value-grid" data-reveal-group>
+      ${[["01","Teranga","L'hospitalité avant tout : chaque client est accueilli comme un invité d'honneur.","assets/images/chambre-108.jpg"],
+         ["02","Excellence","Un souci du détail constant, de la réservation en ligne jusqu'au départ.","assets/images/offres/reservation-anticipee.jpg"],
+         ["03","Ancrage local","Des matériaux, des produits et des artisans sénégalais mis à l'honneur.","assets/images/chambre-207.jpg"],
+         ["04","Confiance","Réservation sécurisée, disponibilités en temps réel, confirmation immédiate.","assets/images/offres/transfert-aeroport.jpg"]]
+        .map(([n,t,d,photo])=>`
+      <div class="value-card reveal">
+        <div class="value-visual">
+          <img src="${photo}" alt="${t}" loading="lazy">
+          <span class="value-index">${n}</span>
+        </div>
+        <div class="value-body"><h4>${t}</h4><p>${d}</p></div>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== NOTRE PARCOURS (chronologie) ===== -->
+  <section class="section section-tight" style="background:var(--sable);">
+    <div class="section-head reveal" style="margin-bottom:10px;"><div class="eyebrow">Étapes clés</div><h2>Notre parcours</h2></div>
+    <div class="about-timeline reveal">
+      ${[["2014","Ouverture de Teranga Palace","Inauguration de l'hôtel sur la Corniche Ouest avec 48 chambres et suites."],
+         ["2017","Rénovation du restaurant panoramique","Réouverture d'une carte mêlant cuisine sénégalaise et internationale."],
+         ["2021","Lancement de la réservation en ligne","Disponibilités en temps réel et confirmation immédiate depuis le site."],
+         ["2025","Distinction « Excellence Hôtelière »","Reconnaissance de la qualité de service par les acteurs du tourisme local."]]
+        .map(([y,t,d])=>`
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-year">${y}</div>
+        <div class="timeline-content"><h4>${t}</h4><p>${d}</p></div>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== SERVICES ET EQUIPEMENTS ===== -->
+  <section class="section">
+    <div class="section-head reveal"><div class="eyebrow">Sur place</div><h2>Services et équipements</h2></div>
+    <div class="numbered-list numbered-list-2col" data-reveal-group>
+      ${[["Chambres & suites","Du confort Simple à la Suite, chaque espace est climatisé et connecté."],
+         ["Restaurant panoramique","Cuisine sénégalaise et internationale, vue sur l'océan Atlantique."],
+         ["Piscine à débordement","Ouverte toute la journée, face à la Corniche Ouest."],
+         ["Conciergerie 24/7","Transferts aéroport, réservations et assistance à toute heure."]]
+        .map(([t,d])=>`
+      <div class="numbered-item reveal">
+        <div><h4>${t}</h4><p>${d}</p></div>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== NOTRE EQUIPE ===== -->
+  <section class="section section-tight" style="background:var(--sable);">
+    <div class="section-head reveal" style="margin-bottom:30px;"><div class="eyebrow">Derrière l'accueil</div><h2>Une équipe à votre écoute</h2></div>
+    <div class="grid-4" data-reveal-group style="display:grid;gap:24px;">
+      ${[["Moussa Diop","Directeur général","assets/images/equipe/moussa-diop.jpg"],["Aminata Fall","Cheffe de cuisine","assets/images/equipe/aminata-fall.jpg"],["Ibrahima Ndiaye","Responsable réception","assets/images/equipe/ibrahima-ndiaye.jpg"],["Khady Sarr","Responsable conciergerie","assets/images/equipe/khady-sarr.jpg"]]
+        .map(([n,role,photo])=>`
+      <div class="panel reveal team-card" style="text-align:center;">
+        <div class="team-portrait"><img src="${photo}" alt="${n}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+        <h4 style="font-size:15.5px;margin-bottom:4px;">${n}</h4>
+        <p style="font-size:12px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;">${role}</p>
+      </div>`).join("")}
+    </div>
+    <p style="text-align:center;font-size:11.5px;color:var(--text-soft);margin-top:26px;opacity:.75;">Équipe présentée à titre d'exemple pour ce projet académique.</p>
+  </section>
+
+  <!-- ===== DISTINCTIONS — bandeau sobre, sans médailles ===== -->
+  <section class="section-tight distinctions-strip">
+    <div class="section-head reveal" style="margin-bottom:34px;">
+      <div class="eyebrow">Reconnu par</div>
+      <h2>Nos distinctions</h2>
+    </div>
+    <div class="distinctions-row" data-reveal-group>
+      ${[
+        ["Excellence Hôtelière","Distinction 2025"],
+        ["Ordre National du Tourisme","République du Sénégal"],
+        ["Green Key Sénégal","Certification éco-responsable"],
+        ["Guide Dakar Prestige","Sélection recommandée"]
+      ].map(([title,sub])=>`
+      <div class="distinctions-item reveal">
+        <h4>${title}</h4>
+        <p>${sub}</p>
+      </div>`).join("")}
+    </div>
+  </section>
+
+  <!-- ===== CTA — bandeau photographique ===== -->
+  <section class="about-cta reveal">
+    <div class="about-cta-media">
+      <img src="assets/images/offres/romantique.jpg" alt="">
+      <div class="about-cta-overlay"></div>
+    </div>
+    <div class="about-cta-content">
+      <div class="eyebrow">Envie de le vivre vous-même ?</div>
+      <h2>Réservez votre séjour à Teranga Palace</h2>
+      <div style="margin-top:26px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+        <a href="#/reserver" class="btn btn-gold">Réserver une chambre</a>
+        <a href="#/contact" class="btn btn-outline-light">Nous contacter</a>
       </div>
     </div>
   </section>`;
 }
+
 
 function pageContact(){
   return `
@@ -726,3 +1194,91 @@ function wireConnexion(){
   };
 }
 
+/* ---------------------------- WIRE : page d'accueil (ajouts) ----------------------------
+   Compteurs animés, carrousel d'avis et accordéon FAQ de la page d'accueil.
+   N'affecte aucune donnée ni aucune fonctionnalité existante. */
+function wireAccueil(){
+  animateCounters();
+  wireTestimonials();
+  wireFaq();
+  const q = routeQuery();
+  if(q.section){
+    const target = document.getElementById(q.section);
+    if(target) setTimeout(()=>target.scrollIntoView({behavior:"smooth", block:"start"}), 80);
+  }
+  const nlForm = document.getElementById("newsletter-form");
+  if(nlForm){
+    nlForm.onsubmit = (e)=>{
+      e.preventDefault();
+      const email = document.getElementById("nl-email");
+      if(!isEmailValid(email.value)){ toast("Email invalide","Veuillez saisir une adresse email valide.", true); return; }
+      toast("Inscription confirmée","Merci ! Vous recevrez bientôt nos offres exclusives.");
+      const band = nlForm.closest(".newsletter-inner");
+      const success = document.getElementById("newsletter-success");
+      if(band && success){ band.classList.add("is-submitted"); success.classList.add("show"); }
+      email.value = "";
+    };
+  }
+}
+
+function animateCounters(){
+  const els = document.querySelectorAll("[data-counter]");
+  if(!els.length) return;
+  const run = (el)=>{
+    const raw = el.dataset.counter;
+    const match = raw.match(/[\d.]+/);
+    if(!match) { el.textContent = raw; return; }
+    const target = parseFloat(match[0]);
+    const suffix = raw.slice(match.index + match[0].length);
+    const prefix = raw.slice(0, match.index);
+    const isDecimal = match[0].includes(".");
+    const duration = 1100, start = performance.now();
+    function step(now){
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = target * eased;
+      el.textContent = prefix + (isDecimal ? val.toFixed(1) : Math.round(val)) + suffix;
+      if(p < 1) requestAnimationFrame(step); else el.textContent = raw;
+    }
+    requestAnimationFrame(step);
+  };
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{ if(entry.isIntersecting){ run(entry.target); io.unobserve(entry.target); } });
+    }, {threshold:0.4});
+    els.forEach(el=>io.observe(el));
+  } else {
+    els.forEach(run);
+  }
+}
+
+function wireTestimonials(){
+  const track = document.getElementById("testimonials-slides");
+  const dots = document.querySelectorAll("#testimonial-dots .testimonial-dot");
+  if(!track || !dots.length) return;
+  let idx = 0, timer = null;
+  function go(i){
+    idx = (i + dots.length) % dots.length;
+    track.style.transform = `translateX(-${idx * 100}%)`;
+    dots.forEach((d,j)=>d.classList.toggle("active", j===idx));
+  }
+  dots.forEach((d,i)=>d.addEventListener("click", ()=>{ go(i); restart(); }));
+  function restart(){ if(timer) clearInterval(timer); timer = setInterval(()=>go(idx+1), 5500); }
+  restart();
+}
+
+function wireFaq(){
+  document.querySelectorAll("[data-faq-toggle]").forEach(btn=>{
+    const item = btn.closest(".faq-item");
+    const answer = item.querySelector(".faq-answer");
+    if(item.classList.contains("open")) answer.style.maxHeight = answer.scrollHeight + "px";
+    btn.onclick = ()=>{
+      const wasOpen = item.classList.contains("open");
+      document.querySelectorAll(".faq-item.open").forEach(other=>{
+        if(other !== item){ other.classList.remove("open"); other.querySelector(".faq-answer").style.maxHeight = null; }
+      });
+      item.classList.toggle("open", !wasOpen);
+      answer.style.maxHeight = !wasOpen ? answer.scrollHeight + "px" : null;
+    };
+  });
+}

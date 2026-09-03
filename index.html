@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teranga Palace — Gestion Hôtelière</title>
+<title>Teranga Palace — Hôtel 5 étoiles à Dakar</title>
+<meta name="description" content="Teranga Palace, hôtel 5 étoiles sur la Corniche Ouest de Dakar : chambres et suites face à l'océan, restaurant panoramique, piscine à débordement et réservation en ligne instantanée.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:title" content="Teranga Palace — Hôtel 5 étoiles à Dakar">
+<meta property="og:description" content="L'élégance sénégalaise au cœur de Dakar : chambres, suites, restaurant panoramique et réservation en ligne.">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -34,6 +39,28 @@
 <div id="toast-stack"></div>
 <div id="modal-root"></div>
 <div id="print-area" class="print-only"></div>
+
+<!-- ===== ÉLÉMENTS FLOTTANTS GLOBAUX (ajout — persistent sur toutes les pages) ===== -->
+<div class="fab-group" id="fab-group">
+  <a class="fab-item fab-whatsapp" href="https://wa.me/221338200000" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="#fff"><path d="M16.02 3C9.4 3 4 8.4 4 15.02c0 2.36.62 4.57 1.7 6.48L4 29l7.68-1.65a11.9 11.9 0 0 0 4.34.81h.01c6.62 0 12.02-5.4 12.02-12.02C28.05 8.4 22.65 3 16.02 3zm7 16.94c-.29.82-1.7 1.57-2.35 1.65-.6.08-1.35.11-2.18-.14-.5-.15-1.15-.37-1.98-.73-3.48-1.5-5.76-5.02-5.94-5.25-.17-.24-1.42-1.89-1.42-3.6s.9-2.56 1.22-2.9c.31-.35.68-.43.9-.43h.65c.21 0 .49-.08.76.58.29.7.98 2.4 1.06 2.58.08.17.14.38.03.6-.11.24-.17.38-.34.58-.17.2-.36.45-.51.6-.17.17-.35.36-.15.7.2.34.9 1.49 1.94 2.42 1.34 1.2 2.46 1.57 2.8 1.75.34.17.55.15.75-.09.21-.24.87-1.01 1.1-1.36.24-.34.48-.29.8-.17.34.11 2.1.99 2.46 1.17.36.17.6.26.68.4.09.15.09.86-.2 1.68z"/></svg>
+  </a>
+  <a class="fab-item fab-phone" href="tel:+221338200000" aria-label="Appeler l'hôtel" title="Appeler">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8.1 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.9 2.2z"/></svg>
+  </a>
+  <a class="fab-item fab-mail" href="mailto:contact@terangapalace.sn" aria-label="Envoyer un email" title="Email">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+  </a>
+  <a class="fab-item fab-instagram" href="https://instagram.com/terangapalace" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="#fff" stroke="none"/></svg>
+  </a>
+  <button type="button" class="fab-toggle" id="fab-toggle" aria-label="Nous contacter" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+</div>
+<button id="back-to-top" type="button" aria-label="Retour en haut de page" title="Retour en haut">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
+</button>
 
 <script src="js/icons.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

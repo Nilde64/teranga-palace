@@ -35,7 +35,7 @@ function pageDashboard(session){
     <div class="stat-card"><div class="stat-label">${ic('gauge')} Taux d'occupation</div><div class="stat-value">${tauxOccupation}%</div></div>
   </div>
   <div class="grid-dash" style="display:grid;gap:20px;">
-    <div class="panel"><h4 style="margin-bottom:16px;font-size:16px;">Évolution des réservations</h4>${barChart(resByMonth,"#c9a15a")}</div>
+    <div class="panel"><h4 style="margin-bottom:16px;font-size:16px;">Évolution des réservations</h4>${barChart(resByMonth,"#ad8a3f")}</div>
     <div class="panel"><h4 style="margin-bottom:16px;font-size:16px;">Chambres les plus réservées</h4>${topRooms.map(t=>barRow(t.label, t.count, Math.max(...topRooms.map(x=>x.count),1))).join("")}</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px;">
@@ -118,7 +118,7 @@ function wireClientRowActions(refresh){
     openModal(`<h3>${c.prenom} ${c.nom}</h3>
       <p style="font-size:13px;color:var(--text-soft);line-height:1.9;">${c.email}<br>${c.telephone}<br>${c.adresse||"—"}</p>
       <h4 style="font-size:14px;margin:16px 0 8px;">Historique de séjours</h4>
-      ${history.length? history.map(s=>`<div style="font-size:12.5px;padding:8px 0;border-bottom:1px solid rgba(11,27,46,.08);">Chambre ${s.numeroChambre} · ${fmtDate(s.dateArriveeReelle)} → ${fmtDate(s.dateDepartReelle)} · ${fmtMoney(s.montantTotal)}</div>`).join("") : "<p style='font-size:12.5px;color:var(--text-soft);'>Aucun séjour enregistré.</p>"}
+      ${history.length? history.map(s=>`<div style="font-size:12.5px;padding:8px 0;border-bottom:1px solid rgba(13,27,46,.08);">Chambre ${s.numeroChambre} · ${fmtDate(s.dateArriveeReelle)} → ${fmtDate(s.dateDepartReelle)} · ${fmtMoney(s.montantTotal)}</div>`).join("") : "<p style='font-size:12.5px;color:var(--text-soft);'>Aucun séjour enregistré.</p>"}
       <div class="modal-actions"><button class="btn btn-outline btn-sm" id="modal-close">Fermer</button></div>`);
     document.getElementById("modal-close").onclick = closeModal;
   });
@@ -171,7 +171,7 @@ function roomRows(filter){
   if(!list.length) return `<tr><td colspan="7">${emptyState("Aucune chambre dans cette catégorie.")}</td></tr>`;
   return list.map(c=>{
     const badge = c.statut==="Disponible" ? '<span class="badge badge-green">Disponible</span>' : c.statut==="Occupée" ? '<span class="badge badge-red">Occupée</span>' : '<span class="badge badge-gray">Maintenance</span>';
-    const thumb = c.hasPhoto && !c.photo ? `<div style="width:44px;height:44px;border-radius:4px;background:rgba(11,27,46,.06);display:flex;align-items:center;justify-content:center;color:var(--text-soft);font-size:9px;">...</div>`
+    const thumb = c.hasPhoto && !c.photo ? `<div style="width:44px;height:44px;border-radius:4px;background:rgba(13,27,46,.06);display:flex;align-items:center;justify-content:center;color:var(--text-soft);font-size:9px;">...</div>`
       : roomImageTag(c, "width:44px;height:44px;object-fit:cover;border-radius:4px;");
     return `<tr><td>${thumb}</td><td><b>${c.numeroChambre}</b></td><td>${c.type}</td><td>${fmtMoney(c.prixParNuit)}</td><td>${c.capacite} pers.</td><td>${badge}</td>
       <td class="row-actions">
@@ -245,7 +245,7 @@ function roomFormModal(room, refresh){
   openModal(`<h3>${isEdit?"Modifier la chambre":"Ajouter une chambre"}</h3>
     <div class="field">
       <label>Photo de la chambre</label>
-      <div id="f-photo-preview" style="height:130px;border:1px dashed rgba(11,27,46,.25);border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:rgba(11,27,46,.03);margin-bottom:8px;"></div>
+      <div id="f-photo-preview" style="height:130px;border:1px dashed rgba(13,27,46,.25);border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:rgba(13,27,46,.03);margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;">
         <label class="btn btn-outline btn-sm" style="cursor:pointer;">Choisir un fichier<input type="file" id="f-photo-input" accept="image/*" style="display:none;"></label>
         <button type="button" class="btn btn-outline btn-sm" id="f-photo-remove">Retirer</button>
@@ -326,7 +326,7 @@ function pageAdminReservations(){
   ${checkoutAlertsBanner()}
   <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
     ${["Toutes","Confirmée","Annulée","Terminée","No-show"].map(s=>`<button class="btn btn-sm ${s==='Toutes'?'btn-dark':'btn-outline'}" data-res-filter="${s}">${s}</button>`).join("")}
-    <input type="text" id="res-search" placeholder="Rechercher (ID, client)..." style="margin-left:auto;padding:9px 12px;border:1px solid rgba(11,27,46,.16);min-width:220px;">
+    <input type="text" id="res-search" placeholder="Rechercher (ID, client)..." style="margin-left:auto;padding:9px 12px;border:1px solid rgba(13,27,46,.16);min-width:220px;">
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>ID</th><th>Client</th><th>Chambre</th><th>Arrivée</th><th>Départ</th><th>Pers.</th><th>Montant</th><th>Statut</th><th>Paiement</th><th>Actions</th></tr></thead>
@@ -711,7 +711,7 @@ function printFacture(numeroFacture){
   const nuits = nightsBetween(s.dateArriveeReelle, s.dateDepartReelle);
   document.getElementById("print-area").innerHTML = `
     <div style="font-family:'Jost',sans-serif;max-width:640px;margin:0 auto;">
-      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #c9a15a;padding-bottom:16px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #ad8a3f;padding-bottom:16px;margin-bottom:20px;">
         <div><div style="font-family:'Cormorant Garamond',serif;font-size:26px;">Teranga Palace</div><div style="font-size:11px;color:#666;">Corniche Ouest, Dakar, Sénégal</div></div>
         <div style="text-align:right;"><div style="font-size:13px;font-weight:600;">Facture ${f.numeroFacture}</div><div style="font-size:11px;color:#666;">${fmtDate(f.dateFacture)}</div></div>
       </div>
@@ -755,7 +755,7 @@ function pageAdminStatistiques(){
     <div class="stat-card"><div class="stat-label">Panier moyen</div><div class="stat-value" style="font-size:22px;">${fmtMoney(DB.reservations.length? DB.reservations.reduce((s,r)=>s+r.montant,0)/DB.reservations.length : 0)}</div></div>
   </div>
   <div class="grid-2" style="display:grid;gap:20px;">
-    <div class="panel"><h4 style="margin-bottom:16px;font-size:16px;">Évolution des réservations</h4>${barChart(resByMonth,"#c9a15a")}</div>
+    <div class="panel"><h4 style="margin-bottom:16px;font-size:16px;">Évolution des réservations</h4>${barChart(resByMonth,"#ad8a3f")}</div>
     <div class="panel"><h4 style="margin-bottom:16px;font-size:16px;">Revenus par mois</h4>${barChart(revByMonth,"#4a5d46",fmtMoney)}</div>
   </div>
   <div class="panel" style="margin-top:20px;"><h4 style="margin-bottom:16px;font-size:16px;">Chambres les plus réservées</h4>${topRooms.length?topRooms.map(t=>barRow(t.label,t.count,Math.max(...topRooms.map(x=>x.count),1))).join(""):emptyState("Pas encore de données.")}</div>`;
