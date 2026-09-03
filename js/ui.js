@@ -268,7 +268,7 @@ function afterRenderHook(route, session){
   const hooks = {
     "accueil": wireAccueil,
     "chambres": wireChambres, "reserver": wireReserver, "mes-reservations": wireMesReservations, "contact": wireContact,
-    "connexion": wireConnexion, "galerie": wireGalerie,
+    "connexion": wireConnexion, "galerie": wireGalerie, "apropos": wireApropos,
     "admin/dashboard": wireDashboard, "admin/clients": wireAdminClients, "admin/chambres": wireAdminChambres,
     "admin/reservations": wireAdminReservations, "admin/checkin": wireAdminCheckin, "admin/sejours": wireAdminSejours,
     "admin/checkout": wireAdminCheckout, "admin/paiements": wireAdminPaiements, "admin/factures": wireAdminFactures,

@@ -73,8 +73,23 @@ nav.main-nav a.active{color:var(--or);}
   margin-left:6px;border:1px solid var(--or);color:var(--or) !important;padding:9px 18px !important;border-radius:1px;
 }
 .nav-cta:hover{background:var(--or);color:var(--bleu-nuit) !important;}
-.burger{display:none;background:none;border:none;color:var(--ivoire);font-size:22px;padding:6px;}
+.burger{display:none;background:none;border:none;color:var(--ivoire);font-size:22px;padding:6px;flex:none;}
 .userchip{display:flex;align-items:center;gap:10px;color:var(--ivoire);font-size:12px;}
+/* Sur très petits écrans, le logo + RÉSERVER + Connexion + ☰ ne tiennent pas
+   sur une seule ligne : on réduit chaque élément pour que rien ne déborde
+   (le site masque le débordement horizontal, donc le ☰ disparaîtrait sans
+   ce correctif au lieu de simplement créer une barre de défilement). */
+@media (max-width:420px){
+  .topbar-inner{padding:0 12px;height:64px;}
+  .brand-mark{width:26px;height:26px;}
+  .brand-text b{font-size:15px;}
+  .brand-text span{display:none;}
+  .topbar-inner > div[style*="display:flex"]{gap:6px !important;}
+  .nav-reserve-btn{padding:7px 10px;font-size:10px;letter-spacing:.05em;}
+  .nav-cta{padding:6px 9px !important;font-size:10.5px;}
+  .userchip{display:none;}
+  .burger{font-size:19px;padding:4px;}
+}
 .userchip .role-tag{background:rgba(173,138,63,.16);color:var(--or-clair);padding:4px 10px;letter-spacing:.08em;text-transform:uppercase;font-size:10px;border-radius:12px;}
 
 /* ---- Admin shell ---- */
@@ -113,6 +128,11 @@ nav.main-nav a.active{color:var(--or);}
 .btn-danger:hover{background:var(--rouge);color:#fff;}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
 .btn-block{width:100%;}
+.btn-pair{display:flex;gap:10px;flex-wrap:wrap;}
+@media (max-width:480px){
+  .btn-pair{flex-direction:column;}
+  .btn-pair .btn{width:100%;}
+}
 
 .section{max-width:1240px;margin:0 auto;padding:88px 28px;}
 .section-tight{padding:56px 28px;}
@@ -164,7 +184,7 @@ nav.main-nav a.active{color:var(--or);}
 .offer-card{
   position:relative;background:var(--white);border:1px solid rgba(13,27,46,.07);border-radius:14px;
   overflow:hidden;display:flex;flex-direction:row;align-items:stretch;
-  height:224px;
+  min-height:250px;
   box-shadow:0 12px 30px -22px rgba(13,27,46,.4);
   transition:transform .45s cubic-bezier(.22,.61,.36,1), box-shadow .45s cubic-bezier(.22,.61,.36,1);
 }
@@ -175,19 +195,19 @@ nav.main-nav a.active{color:var(--or);}
 }
 .offer-card .offer-visual img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .7s cubic-bezier(.22,.61,.36,1);}
 .offer-card:hover .offer-visual img{transform:scale(1.06);}
-.offer-card .offer-body{padding:20px 24px;display:flex;flex-direction:column;justify-content:center;flex:1;min-width:0;overflow:hidden;}
+.offer-card .offer-body{padding:20px 24px;display:flex;flex-direction:column;justify-content:center;flex:1;min-width:0;}
 .offer-card .offer-icon{width:38px;height:38px;border-radius:50%;background:var(--lavande-pale);color:var(--or-fonce);display:flex;align-items:center;justify-content:center;margin-bottom:10px;flex-shrink:0;}
 .offer-card h4{font-size:16.5px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.offer-card p{font-size:12.5px;color:var(--text-soft);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.offer-card p{font-size:12.5px;color:var(--text-soft);line-height:1.6;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
 .offer-card .offer-tag{
   position:absolute;top:12px;left:12px;z-index:3;box-shadow:0 4px 10px rgba(0,0,0,.25);
   background:var(--bleu-nuit);color:var(--or-clair);border:1px solid rgba(173,138,63,.5);
 }
 .offer-card .btn{margin-top:14px;align-self:flex-start;flex-shrink:0;}
 @media (max-width:640px){
-  .offer-card{flex-direction:column;height:auto;}
+  .offer-card{flex-direction:column;height:auto;min-height:0;}
   .offer-card .offer-visual{flex:0 0 auto;width:100%;height:190px;}
-  .offer-card p{-webkit-line-clamp:4;}
+  .offer-card p{-webkit-line-clamp:5;}
 }
 
 /* tables */
@@ -1284,6 +1304,42 @@ nav.main-nav a.active::after{transform:scaleX(1);}
 /* --- Compteurs statistiques animés --- */
 .stat-counter{font-family:var(--serif);font-size:34px;color:var(--or);}
 
+/* --- Bande "chiffres clés" (page À propos) --- */
+.stat-band{
+  background:linear-gradient(135deg, var(--bleu-nuit) 0%, var(--bleu-nuit-2) 100%);
+  color:var(--ivoire);position:relative;overflow:hidden;
+}
+.stat-band::before{
+  content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(173,138,63,.16) 1px, transparent 1px);
+  background-size:26px 26px;opacity:.5;pointer-events:none;
+}
+.stat-band-grid{
+  position:relative;display:grid;grid-template-columns:repeat(4,1fr);
+  max-width:1240px;margin:0 auto;padding:58px 28px;
+}
+.stat-band-item{
+  text-align:center;padding:6px 20px;position:relative;
+  border-right:1px solid rgba(250,248,243,.14);
+  transition:transform .3s ease;
+}
+.stat-band-item:last-child{border-right:none;}
+.stat-band-item:hover{transform:translateY(-4px);}
+.stat-band-item .stat-counter{color:var(--or-clair);text-shadow:0 0 24px rgba(212,175,90,.25);}
+.stat-band-label{
+  font-size:12px;letter-spacing:.05em;color:rgba(250,248,243,.65);margin-top:8px;
+  text-transform:uppercase;
+}
+@media (max-width:820px){
+  .stat-band-grid{grid-template-columns:repeat(2,1fr);gap:34px 0;}
+  .stat-band-item{border-right:none;}
+  .stat-band-item:nth-child(odd){border-right:1px solid rgba(250,248,243,.14);}
+}
+@media (max-width:480px){
+  .stat-band-grid{grid-template-columns:1fr;gap:26px 0;padding:46px 24px;}
+  .stat-band-item{border-right:none !important;}
+}
+
 /* --- Bouton "retour en haut" --- */
 #back-to-top{
   position:fixed;right:24px;bottom:24px;width:46px;height:46px;border-radius:50%;
@@ -1688,6 +1744,7 @@ nav.main-nav a.active::after{transform:scaleX(1);}
 }
 .distinctions-item:first-child{border-left:none;}
 .distinctions-item h4{font-size:16px;color:var(--bleu-nuit);margin-bottom:6px;}
+.seal-svg{width:88px;height:88px;margin:0 auto 16px;display:block;}
 .distinctions-item p{font-size:11.5px;letter-spacing:.05em;color:var(--text-soft);text-transform:uppercase;}
 @media (max-width:820px){
   .distinctions-row{grid-template-columns:repeat(2,1fr);gap:28px 0;}

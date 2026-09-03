@@ -108,9 +108,9 @@ function pageAccueil(session){
     </div>
     <div class="offers-grid" data-reveal-group>
       ${[
-        ["assets/images/offres/petit-dejeuner.jpg","coffee","Petit-déjeuner inclus",null,"Un copieux buffet sénégalais et continental servi chaque matin au restaurant panoramique, pour bien commencer la journée."],
-        ["assets/images/offres/romantique.jpg","heart","Escapade Romantique","Sur demande","Décoration florale, bouteille de bienvenue et surclassement selon disponibilité, pour un séjour à deux inoubliable."],
-        ["assets/images/offres/spa.jpg","leaf","Bien-être & Spa",null,"Accès libre à la piscine à débordement, au spa et à la salle de sport, avec un soin découverte offert dès 2 nuits."],
+        ["assets/images/offres/petit-dejeuner-offre.jpg","coffee","Petit-déjeuner inclus",null,"Un copieux buffet sénégalais et continental servi chaque matin au restaurant panoramique, pour bien commencer la journée."],
+        ["assets/images/offres/romantique-offre.jpg","heart","Escapade Romantique","Sur demande","Décoration florale, bouteille de bienvenue et surclassement selon disponibilité, pour un séjour à deux inoubliable."],
+        ["assets/images/offres/spa-offre.jpg","leaf","Bien-être & Spa",null,"Accès libre à la piscine à débordement, au spa et à la salle de sport, avec un soin découverte offert dès 2 nuits."],
         ["assets/images/offres/affaires.jpg","briefcase","Séjour Affaires",null,"Wi-Fi haut débit, espace bureau en chambre et tarifs préférentiels pour les séjours prolongés en semaine."],
         ["assets/images/offres/transfert-aeroport.jpg","users","Transfert Aéroport Offert","Dès 3 nuits","Un chauffeur vous accueille à l'aéroport et vous conduit à l'hôtel, sans frais supplémentaires."],
         ["assets/images/offres/reservation-anticipee.jpg","sparkle","Réservation Anticipée","-15%","Réservez au moins 21 jours à l'avance et bénéficiez d'une réduction sur le tarif de votre chambre."]
@@ -311,6 +311,7 @@ function wireChambres(){
       const t = btn.dataset.filterType;
       const filtered = t==="Tous" ? DB.chambres : DB.chambres.filter(c=>c.type===t);
       document.getElementById("rooms-grid").innerHTML = filtered.length ? filtered.map(roomCard).join("") : emptyState("Aucune chambre dans cette catégorie.");
+      initScrollReveal();
     };
   });
 }
@@ -494,7 +495,7 @@ function pageReserver(rawSession){
       <!-- ÉTAPE 1 : identification (connexion ou création de compte) -->
       <div id="res-step-1" class="${session?'hidden':''}">
         <p style="font-size:13px;color:var(--text-soft);margin-bottom:18px;">Pour réserver, connectez-vous à votre compte ou créez-en un. C'est nécessaire avant de pouvoir choisir vos dates et votre chambre.</p>
-        <div style="display:flex;gap:10px;margin-bottom:22px;">
+        <div class="btn-pair" style="margin-bottom:22px;">
           <button class="btn btn-sm btn-dark" id="auth-tab-login" data-auth-tab="login">J'ai déjà un compte</button>
           <button class="btn btn-sm btn-outline" id="auth-tab-signup" data-auth-tab="signup">Créer un compte</button>
         </div>
@@ -548,7 +549,7 @@ function pageReserver(rawSession){
           <div class="field"><label>Email (compte)</label><input type="email" id="c-email" value="${prefill?prefill.email:''}" readonly style="background:var(--sable);cursor:not-allowed;"><span class="err">Veuillez saisir un email valide.</span></div>
           <div class="field"><label>Téléphone</label><input type="tel" id="c-tel" value="${prefill?prefill.telephone:''}"><span class="err">Veuillez saisir un téléphone valide.</span></div>
         </div>
-        <div style="display:flex;gap:10px;">
+        <div class="btn-pair">
           <button class="btn btn-outline btn-sm" id="btn-back-3">← Changer de chambre</button>
           <button class="btn btn-gold" id="btn-confirm-res">Confirmer la réservation</button>
         </div>
@@ -940,6 +941,26 @@ function ribbonStripes(colors){
   const n = colors.length, step = 100/n;
   return colors.map((c,i)=>`<stop offset="${(i*step).toFixed(2)}%" stop-color="${c}"/><stop offset="${((i+1)*step).toFixed(2)}%" stop-color="${c}"/>`).join("");
 }
+function seal(mark){
+  return `
+  <svg viewBox="0 0 100 100" class="seal-svg" aria-hidden="true">
+    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--or)" stroke-width="1"/>
+    <circle cx="50" cy="50" r="40" fill="none" stroke="var(--or)" stroke-width="1" stroke-dasharray="2 3"/>
+    <path d="M18 40 C10 55 14 72 26 80" fill="none" stroke="var(--or)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M22 46 C26 46 30 44 30 40" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M19 54 C23 54 27 52 27 48" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M18 62 C22 62 26 60 26 56" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M20 70 C24 70 28 68 28 64" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M82 40 C90 55 86 72 74 80" fill="none" stroke="var(--or)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M78 46 C74 46 70 44 70 40" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M81 54 C77 54 73 52 73 48" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M82 62 C78 62 74 60 74 56" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M80 70 C76 70 72 68 72 64" fill="none" stroke="var(--or)" stroke-width="1.4" stroke-linecap="round"/>
+    <text x="50" y="47" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="${mark.length>3?15:20}" fill="var(--bleu-nuit)" font-weight="600" letter-spacing="1">${mark}</text>
+    <text x="50" y="60" text-anchor="middle" font-family="Jost, sans-serif" font-size="5.5" letter-spacing="2.5" fill="var(--or-fonce)">TERANGA PALACE</text>
+  </svg>`;
+}
+
 function medalGraphic(uid, iconKey, metalKey, ribbonColors){
   const m = MEDAL_METALS[metalKey];
   const gradId = `medal-metal-${uid}`, ribbonId = `medal-ribbon-${uid}`, shadowId = `medal-shadow-${uid}`;
@@ -1013,12 +1034,12 @@ function pageApropos(){
   </section>
 
   <!-- ===== CHIFFRES CLÉS ===== -->
-  <section class="section-tight" style="background:var(--bleu-nuit);color:var(--ivoire);">
-    <div class="grid-4" data-reveal-group style="display:grid;gap:26px;text-align:center;padding:56px 28px;max-width:1240px;margin:0 auto;">
+  <section class="section-tight stat-band">
+    <div class="stat-band-grid" data-reveal-group>
       ${[["48","Chambres et suites"],["24/7","Réception et conciergerie"],["4.8/5","Satisfaction client moyenne"],["2014","Année d'ouverture"]].map(([n,l])=>`
-      <div class="reveal">
-        <div class="stat-counter" data-counter="${n}" style="color:var(--or-clair);">0</div>
-        <div style="font-size:12.5px;color:rgba(250,248,243,.65);margin-top:6px;">${l}</div>
+      <div class="stat-band-item reveal">
+        <div class="stat-counter" data-counter="${n}">0</div>
+        <div class="stat-band-label">${l}</div>
       </div>`).join("")}
     </div>
   </section>
@@ -1089,7 +1110,7 @@ function pageApropos(){
     <p style="text-align:center;font-size:11.5px;color:var(--text-soft);margin-top:26px;opacity:.75;">Équipe présentée à titre d'exemple pour ce projet académique.</p>
   </section>
 
-  <!-- ===== DISTINCTIONS — bandeau sobre, sans médailles ===== -->
+  <!-- ===== DISTINCTIONS ===== -->
   <section class="section-tight distinctions-strip">
     <div class="section-head reveal" style="margin-bottom:34px;">
       <div class="eyebrow">Reconnu par</div>
@@ -1097,12 +1118,13 @@ function pageApropos(){
     </div>
     <div class="distinctions-row" data-reveal-group>
       ${[
-        ["Excellence Hôtelière","Distinction 2025"],
-        ["Ordre National du Tourisme","République du Sénégal"],
-        ["Green Key Sénégal","Certification éco-responsable"],
-        ["Guide Dakar Prestige","Sélection recommandée"]
-      ].map(([title,sub])=>`
+        ["2025","Excellence Hôtelière","Distinction 2025"],
+        ["SN","Ordre National du Tourisme","République du Sénégal"],
+        ["ECO","Green Key Sénégal","Certification éco-responsable"],
+        ["★★★★★","Guide Dakar Prestige","Sélection recommandée"]
+      ].map(([mark,title,sub])=>`
       <div class="distinctions-item reveal">
+        ${seal(mark)}
         <h4>${title}</h4>
         <p>${sub}</p>
       </div>`).join("")}
@@ -1219,6 +1241,10 @@ function wireAccueil(){
       email.value = "";
     };
   }
+}
+
+function wireApropos(){
+  animateCounters();
 }
 
 function animateCounters(){
